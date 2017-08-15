@@ -911,7 +911,8 @@ void menu_config_func(void)
 		break;
 	case 4: //Sound reset
 		//fifoSendValue32(FIFO_USER_08, FIFO_SOUND_RESET);
-		SendArm7Command(FIFO_SOUND_RESET,0x0,0x0,0x0);
+		//SendArm7Command(FIFO_SOUND_RESET,0x0,0x0,0x0);
+		SendMultipleWordACK(FIFO_SOUND_RESET,0x0,0x0,0x0);
 		break;
 	}
 }

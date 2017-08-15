@@ -58,7 +58,8 @@ void writeAPU(u32 val,u32 addr)
 			(addr < 0x4018 || debuginfo[16] == 20))) {
 		
 		//IO Write direct
-		SendArm7Command(FIFO_APU_WRITE16,(u32)((addr << 8) | val),0x0,0x0);
+		//SendArm7Command(FIFO_APU_WRITE16,(u32)((addr << 8) | val),0x0,0x0);
+		SendMultipleWordACK(FIFO_APU_WRITE16,(u32)((addr << 8) | val),0x0,0x0);
 		
 		IPC_APUW++; //fifo IPC_APUW update arm9notify when readAPU @ ARM7 is done
 	}
@@ -79,7 +80,8 @@ void writeAPU(u32 val,u32 addr)
 ******************************/
 void Sound_reset() {
 	//fifoSendValue32(FIFO_USER_08, FIFO_APU_RESET);
-	SendArm7Command(FIFO_APU_RESET,0x0,0x0,0x0);
+	//SendArm7Command(FIFO_APU_RESET,0x0,0x0,0x0);
+	SendMultipleWordACK(FIFO_APU_RESET,0x0,0x0,0x0);
 }
 
 int last_x, last_y;	//most recently touched coords

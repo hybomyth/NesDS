@@ -1,5 +1,24 @@
+/*
+Copyright (C) 2015-2017  Coto
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>
+*/
+
 //Coto: these are my FIFO handling libs. Works fine with NIFI (trust me this is very tricky to do without falling into freezes).
 //Use it at your will, just make sure you read WELL the descriptions below.
+
+//fifo ipc driver: revision 1.1
 
 #include <nds.h>
 #include "common_shared.h"
@@ -73,27 +92,144 @@ inline bool SetSoftFIFO(u32 value)
 		return false;
 }
 
-//SendArm[7/9]Command: These send a command and up to 15 arguments. 
-//The other ARM Core through a FIFO interrupt will execute HandleFifo()
-//By default I use 4 (you can fill them with 0s if you want to use fewer)
+// Ensures a SendArm[7/9]Command (FIFO message) command to be forcefully executed at target ARM Core, while the host ARM Core awaits. 
 #ifdef ARM9
 __attribute__((section(".itcm")))
-inline void SendArm7Command(u32 command1, u32 command2, u32 command3, u32 command4)
 #endif
-#ifdef ARM7
-inline void SendArm9Command(u32 command1, u32 command2, u32 command3, u32 command4)
-#endif    
+inline void FIFO_DRAINWRITE(){
+	while (!(REG_IPC_FIFO_CR & IPC_FIFO_SEND_EMPTY)){}
+}
+
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+inline bool SendMultipleWordACK(uint32 data0, uint32 data1, uint32 data2, uint32 data3){
+	uint32 reply = SendMultipleWordByFifo(fifo_requires_ack, data0, data1, data2, data3);
+	if(reply == fifo_requires_ack_execok){
+		return true;
+	}
+	return false;
+}
+
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+inline uint8 Readuint8WordACK(uint32 data0){			//data0 address -> return code: uint8 value from address
+	
+	//invalidate cache here (arm9)
+	#ifdef ARM9
+	//Prevent Cache problems.
+	DC_FlushRange((u32*)data0, (int)4);
+	#endif
+	
+	return (uint8)SendMultipleWordByFifo((uint32)fifo_readuint8_ack, (uint32)data0, (uint32)0, (uint32)0, (uint32)0);
+}
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+inline uint16 Readuint16WordACK(uint32 data0){			//data0 address -> return code: uint8 value from address
+	
+	//invalidate cache here (arm9)
+	#ifdef ARM9
+	//Prevent Cache problems.
+	DC_FlushRange((u32*)data0, (int)4);
+	#endif
+	
+	return (uint16)SendMultipleWordByFifo((uint32)fifo_readuint16_ack, (uint32)data0, (uint32)0, (uint32)0, (uint32)0);
+}
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+inline uint32 Readuint32WordACK(uint32 data0){			//data0 address -> return code: uint8 value from address
+	
+	//invalidate cache here (arm9)
+	#ifdef ARM9
+	//Prevent Cache problems.
+	DC_FlushRange((u32*)data0, (int)4);
+	#endif
+	
+	return (uint32)SendMultipleWordByFifo((uint32)fifo_readuint32_ack, (uint32)data0, (uint32)0, (uint32)0, (uint32)0);
+}
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+inline bool Writeuint8WordACK(uint32 data0, uint8 data1){			//data0 address / data1 value *uint32)
+	
+	//invalidate cache here (arm9)
+	#ifdef ARM9
+	//Prevent Cache problems.
+	DC_FlushRange((u32*)data0, (int)4);
+	#endif
+	
+	uint32 reply = SendMultipleWordByFifo((uint32)fifo_writeuint8_ack, (uint32)data0, (uint32)data1, (uint32)0, (uint32)0);
+	if(reply == data1){
+		return true;
+	}
+	return false;
+}
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+inline bool Writeuint16WordACK(uint32 data0, uint16 data1){			//data0 address / data1 value *uint32)
+	
+	//invalidate cache here (arm9)
+	#ifdef ARM9
+	//Prevent Cache problems.
+	DC_FlushRange((u32*)data0, (int)4);
+	#endif
+	
+	uint32 reply = SendMultipleWordByFifo((uint32)fifo_writeuint16_ack, (uint32)data0, (uint32)data1, (uint32)0, (uint32)0);
+	if(reply == data1){
+		return true;
+	}
+	return false;
+}
+
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+inline bool Writeuint32WordACK(uint32 data0, uint32 data1){			//data0 address / data1 value *uint32)
+	
+	//invalidate cache here (arm9)
+	#ifdef ARM9
+	//Prevent Cache problems.
+	DC_FlushRange((uint32*)data0, (int)4);
+	#endif
+	
+	uint32 reply = SendMultipleWordByFifo((uint32)fifo_writeuint32_ack, (uint32)data0, (uint32)data1, (uint32)0, (uint32)0);
+	if(reply == data1){
+		return true;
+	}
+	return false;
+}
+
+//Internal, not for usercode
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+inline uint32 SendMultipleWordByFifo(uint32 data0, uint32 data1, uint32 data2, uint32 data3, uint32 data4)	//channel / multiple words / err reporting
 {	
 	FIFO_DRAINWRITE();
 	
-	REG_IPC_FIFO_TX = command1;
-	REG_IPC_FIFO_TX = command2;
-	REG_IPC_FIFO_TX = command3;
-	REG_IPC_FIFO_TX = command4;
+	//data4 to be used from other core
+	REG_IPC_FIFO_TX =	(uint32)data0; 	//raise irq here
+	REG_IPC_FIFO_TX = 	(uint32)data1;
+	REG_IPC_FIFO_TX = 	(uint32)data2;
+	REG_IPC_FIFO_TX = 	(uint32)data3;
+	REG_IPC_FIFO_TX = 	(uint32)data4;
 	
-	//always send full fifo queue
-	REG_IPC_FIFO_CR |= IPC_FIFO_ERROR;
+	FIFO_DRAINWRITE();
+	 
+	REG_IPC_FIFO_CR |= (1<<3); //3     W    Send Fifo Clear             (0=Nothing, 1=Flush Send Fifo)
 	
+	return MyIPC->fiforeply;
 }
 
 //FIFO HANDLER INIT
@@ -109,102 +245,166 @@ inline void HandleFifoEmpty(){
 __attribute__((section(".itcm")))
 #endif
 inline void HandleFifoNotEmpty(){
-	u32 command1 = 0,command2 = 0,command3 = 0,command4 = 0;
+	volatile uint32 cmd1 = 0,cmd2 = 0,cmd3 = 0,cmd4 = 0,cmd5 = 0,cmd6 = 0,cmd7 = 0,cmd8 = 0,cmd9 = 0,cmd10 = 0,cmd11 = 0,cmd12 = 0,cmd13 = 0,cmd14 = 0,cmd15 = 0;
 	
 	if(!(REG_IPC_FIFO_CR & IPC_FIFO_RECV_EMPTY)){
-		command1 = REG_IPC_FIFO_RX;
+		cmd1 = REG_IPC_FIFO_RX;
 	}
 	
 	if(!(REG_IPC_FIFO_CR & IPC_FIFO_RECV_EMPTY)){
-		command2 = REG_IPC_FIFO_RX;
+		cmd2 = REG_IPC_FIFO_RX;
 	}
 	
 	if(!(REG_IPC_FIFO_CR & IPC_FIFO_RECV_EMPTY)){
-		command3 = REG_IPC_FIFO_RX;
+		cmd3 = REG_IPC_FIFO_RX;
 	}
 	
 	if(!(REG_IPC_FIFO_CR & IPC_FIFO_RECV_EMPTY)){
-		command4 = REG_IPC_FIFO_RX;
+		cmd4 = REG_IPC_FIFO_RX;
 	}
 	
+	if(!(REG_IPC_FIFO_CR & IPC_FIFO_RECV_EMPTY)){
+		cmd5 = REG_IPC_FIFO_RX;
+	}
 	
-	//ARM7 command handler
-	#ifdef ARM7
-	switch (command1) {
-        
-		case FIFO_APU_PAUSE:
-			APU_paused=1;
-			memset((u32*)buffer,0,sizeof(buffer));
+	if(cmd1 == fifo_requires_ack){
+		switch (cmd2) {
+			//ARM7 command handler
+			#ifdef ARM7
+			case FIFO_APU_PAUSE:
+				APU_paused=1;
+				memset((u32*)buffer,0,sizeof(buffer));
 			break;
-		case FIFO_UNPAUSE:
-			APU_paused=0;
+			case FIFO_UNPAUSE:
+				APU_paused=0;
+				break;
+			case FIFO_APU_RESET:
+				memset((u32*)buffer,0,sizeof(buffer));
+				APU_paused=0;
+				resetAPU();
 			break;
-		case FIFO_APU_RESET:
-			memset((u32*)buffer,0,sizeof(buffer));
-			APU_paused=0;
-			resetAPU();
+			case FIFO_SOUND_RESET:
+				lidinterrupt();
 			break;
-		case FIFO_SOUND_RESET:
-			lidinterrupt();
+		
+			//arm9 wants to WifiSync
+			case(WIFI_SYNC):{
+				Wifi_Sync();
+			}
 			break;
-	
-        //arm9 wants to WifiSync
-		case(WIFI_SYNC):{
-			Wifi_Sync();
-		}
-        break;
-        
-		//must be called from within timer irqs
-		//update apu from nds irq
-		case(FIFO_APU_WRITE16):{
 			
-			//method 1
-			//stack to fifo here
-			SetSoftFIFO(command2);
+			//must be called from within timer irqs
+			//update apu from nds irq
+			case(FIFO_APU_WRITE16):{
+				
+				//method 1
+				//stack to fifo here
+				SetSoftFIFO(cmd3);
+				
+				//method 2
+				//u16 msg = (u16)(command2&0xffff);
+				//APUSoundWrite(msg >> 8, msg&0xFF);
+				//IPC_APUR = IPC_APUW;			
 			
-			//method 2
-			//u16 msg = (u16)(command2&0xffff);
-			//APUSoundWrite(msg >> 8, msg&0xFF);
-			//IPC_APUR = IPC_APUW;			
-		
+			}
+			break;
+			
+			//arm9 wants to send a WIFI context block address / userdata is always zero here
+			case(0xc1710101):{
+				//	wifiAddressHandler( void * address, void * userdata )
+				wifiAddressHandler((Wifi_MainStruct *)(u32)cmd3, 0);
+			}
+			break;
+			#endif
+			
+			//ARM9 command handler
+			#ifdef ARM9
+			case(WIFI_SYNC):{
+				Wifi_Sync();
+			}
+			break;
+			#endif
 		}
-		break;
-		
-		//arm9 wants to send a WIFI context block address / userdata is always zero here
-        case(0xc1710101):{
-            //	wifiAddressHandler( void * address, void * userdata )
-            wifiAddressHandler((Wifi_MainStruct *)(u32)command2, 0);
-        }
-        break;
-		
+		MyIPC->fiforeply = (uint32)fifo_requires_ack_execok;
 	}
-	#endif
 	
-	//ARM9 command handler
-	#ifdef ARM9
-	switch (command1) {   
-		case(WIFI_SYNC):{
-			Wifi_Sync();
-		}
-		break;
-    }
-	#endif
+	else if(cmd1 == fifo_writeuint8_ack){
+		
+		//invalidate cache here (arm9)
+		#ifdef ARM9
+		//Prevent Cache problems.
+		DC_FlushRange((u32*)cmd2, (int)4);
+		#endif
+		
+		//data0 address / data1 value *uint32)
+		*(uint8*)cmd2 = (uint8)cmd3;
+		
+		MyIPC->fiforeply = (uint32)*(uint8*)cmd2;	//works with cmd2 passed directly
+	}
 	
-	//Shared: Acknowledge
+	else if(cmd1 == fifo_writeuint16_ack){
+		
+		//invalidate cache here (arm9)
+		#ifdef ARM9
+		//Prevent Cache problems.
+		DC_FlushRange((u32*)cmd2, (int)4);
+		#endif
+		
+		//data0 address / data1 value *uint32)
+		*(uint16*)cmd2 = (uint16)cmd3;
+		
+		MyIPC->fiforeply = (uint32)*(uint16*)cmd2;	//works with cmd2 passed directly
+	}
+	
+	else if(cmd1 == fifo_writeuint32_ack){
+		
+		//invalidate cache here (arm9)
+		#ifdef ARM9
+		//Prevent Cache problems.
+		DC_FlushRange((u32*)cmd2, (int)4);
+		#endif
+		
+		//data0 address / data1 value *uint32)
+		*(uint32*)cmd2 = (uint32)cmd3;
+		
+		MyIPC->fiforeply = *(uint32*)cmd2;	//works with cmd2 passed directly
+	}
+	
+	else if(cmd1 == fifo_readuint8_ack){
+		//invalidate cache here (arm9)
+		#ifdef ARM9
+		//Prevent Cache problems.
+		DC_FlushRange((u32*)cmd2, (int)4);
+		#endif
+		
+		MyIPC->fiforeply = *(uint8*)cmd2;	//works with cmd2 passed directly
+	}
+	
+	else if(cmd1 == fifo_readuint16_ack){
+		//invalidate cache here (arm9)
+		#ifdef ARM9
+		//Prevent Cache problems.
+		DC_FlushRange((u32*)cmd2, (int)4);
+		#endif
+		
+		MyIPC->fiforeply = *(uint16*)cmd2;	//works with cmd2 passed directly
+	}
+	
+	else if(cmd1 == fifo_readuint32_ack){
+		//invalidate cache here (arm9)
+		#ifdef ARM9
+		//Prevent Cache problems.
+		DC_FlushRange((u32*)cmd2, (int)4);
+		#endif
+		
+		MyIPC->fiforeply = *(uint32*)cmd2;	//works with cmd2 passed directly
+	}
+	
+	//ok, send empty signal
 	REG_IPC_FIFO_CR |= IPC_FIFO_ERROR;
 	
-	
 }
 
-
-
-// Ensures a SendArm[7/9]Command (FIFO message) command to be forcefully executed at target ARM Core, while the host ARM Core awaits. 
-#ifdef ARM9
-__attribute__((section(".itcm")))
-#endif
-void FIFO_DRAINWRITE(){
-	while (!(REG_IPC_FIFO_CR & IPC_FIFO_SEND_EMPTY)){}	
-}
 
 //FIFO HANDLER END
 

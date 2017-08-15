@@ -1027,8 +1027,8 @@ void Timer_50ms(void) {
 void arm9_synctoarm7() { 
 //---------------------------------------------------------------------------------
 	//fifoSendValue32(FIFO_DSWIFI, WIFI_SYNC);
-	SendArm7Command(WIFI_SYNC,0x0,0x0,0x0);
-	
+	//SendArm7Command(WIFI_SYNC,0x0,0x0,0x0);
+	SendMultipleWordACK(WIFI_SYNC, 0, 0, 0);
 }
 
 /*
@@ -1068,7 +1068,8 @@ bool Wifi_InitDefault(bool useFirmwareSettings) {
 	TIMER3_CR = 0x00C2; // enable, irq, 1/256 clock
 
 	//fifoSendAddress(FIFO_DSWIFI, (void *)wifi_pass);
-	SendArm7Command(0xc1710101,(u32)wifi_pass,0x0,0x0);
+	//SendArm7Command(0xc1710101,(u32)wifi_pass,0x0,0x0);
+	SendMultipleWordACK(0xc1710101,(u32)wifi_pass,0x0,0x0);
 	
 	while(Wifi_CheckInit()==0) {
 		swiWaitForVBlank();

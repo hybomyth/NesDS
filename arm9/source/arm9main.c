@@ -191,6 +191,78 @@ int main(int _argc, char **_argv) {
 	//idle: default startup
 	switch_dswnifi_mode((u8)dswifi_idlemode);
 	
+	//test case #1: write external uint32 ..ok
+	/*
+	volatile uint32 buf;
+	volatile char writebuf[256];
+	if(Writeuint32WordACK((uint32)buf, (uint32)0xc070c171) == true){
+		sprintf((char*)writebuf,"     write ok:%x",(unsigned int)MyIPC->fiforeply);
+		consoletext(64*2-32,(char*)writebuf,0);
+	}
+	else{
+		sprintf((char*)writebuf,"     write phail:%x",(unsigned int)MyIPC->fiforeply);
+		consoletext(64*2-32,(char*)writebuf,0);
+	}
+	
+	while(1){};
+	*/
+	
+	//test case #2: write external uint16 ..ok
+	/*
+	volatile uint32 buf;
+	volatile char writebuf[256];
+	if(Writeuint16WordACK((uint32)buf, (uint16)0xc070) == true){
+		sprintf((char*)writebuf,"     write ok:%x",(unsigned int)MyIPC->fiforeply);
+		consoletext(64*2-32,(char*)writebuf,0);
+	}
+	else{
+		sprintf((char*)writebuf,"     write phail:%x",(unsigned int)MyIPC->fiforeply);
+		consoletext(64*2-32,(char*)writebuf,0);
+	}
+	
+	while(1){};
+	*/
+	
+	//test case #3: write external uint8 ..ok
+	/*
+	volatile uint32 buf;
+	volatile char writebuf[256];
+	if(Writeuint8WordACK((uint32)buf, (uint8)0x71) == true){
+		sprintf((char*)writebuf,"     write ok:%x",(unsigned int)MyIPC->fiforeply);
+		consoletext(64*2-32,(char*)writebuf,0);
+	}
+	else{
+		sprintf((char*)writebuf,"     write phail:%x",(unsigned int)MyIPC->fiforeply);
+		consoletext(64*2-32,(char*)writebuf,0);
+	}
+	
+	while(1){};
+	*/
+	//test case #4: read external uint8 ..ok
+	/*
+	volatile char writebuf[256];
+	sprintf((char*)writebuf,"     read8:%x",(unsigned int)Readuint8WordACK(0x037f8000));
+	consoletext(64*2-32,(char*)writebuf,0);
+	while(1);
+	*/
+	
+	//test case #5: read external uint16 ..ok
+	/*
+	volatile char writebuf[256];
+	sprintf((char*)writebuf,"     read16:%x",(unsigned int)Readuint16WordACK(0x037f8000));
+	consoletext(64*2-32,(char*)writebuf,0);
+	while(1);
+	*/
+	
+	//test case #6: read external uint32 ..ok
+	/*
+	volatile char writebuf[256];
+	sprintf((char*)writebuf,"     read32:%x",(unsigned int)Readuint32WordACK(0x037f8000));
+	consoletext(64*2-32,(char*)writebuf,0);
+	while(1);
+	*/
+	
+	
 	while(1) { // main loop to do the emulation
 		
 		if(__emuflags & PALTIMING && global_playcount == 0) {

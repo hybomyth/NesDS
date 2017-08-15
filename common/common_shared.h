@@ -1,8 +1,46 @@
+/*
+Copyright (C) 2015-2017  Coto
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>
+*/
+
+//fifo ipc driver: revision 1.1
+
 #ifndef nesds13d_commonipc
 #define nesds13d_commonipc
 
 #include <nds.h>
 #include "wifi_shared.h"
+
+#define fifo_requires_ack	(uint32)(0xffff1010)
+#define fifo_requires_ack_execok	(uint32)(0xe1e2e3e4)
+
+#define fifo_writeuint32_ack	(uint32)(0xffff1011)
+//write value (not address) is ret value
+
+#define fifo_writeuint16_ack	(uint32)(0xffff1012)
+//write value (not address) is ret value
+
+#define fifo_writeuint8_ack	(uint32)(0xffff1013)
+//write value (not address) is ret value
+
+#define fifo_readuint32_ack	(uint32)(0xffff1014)
+
+#define fifo_readuint16_ack	(uint32)(0xffff1015)
+
+#define fifo_readuint8_ack	(uint32)(0xffff1016)
+
 
 //---------------------------------------------------------------------------------
 typedef struct sMyIPC {
@@ -68,10 +106,10 @@ typedef struct sMyIPC {
     char * ROM;   //pointer to ROM page
     int rom_size;   //rom total size
 	
-	
 	//dswifi specific
 	TdsnwifisrvStr dswifiSrv;
-
+	
+	uint32 fiforeply;	//for ret status
 } tMyIPC;
 
 //Shared Work     027FF000h 4KB    -     -    -    R/W
@@ -120,12 +158,24 @@ extern "C" {
 #endif
 
 #ifdef ARM9
-extern void SendArm7Command(u32 command1, u32 command2, u32 command3,u32 command4);
+
 #endif
 
 #ifdef ARM7
-extern void SendArm9Command(u32 command1, u32 command2, u32 command3,u32 command4);
 #endif
+
+//data0 = address
+extern uint32 Readuint32WordACK(uint32 data0);
+extern uint16 Readuint16WordACK(uint32 data0);
+extern uint8 Readuint8WordACK(uint32 data0);
+
+//data0 = address / data1 = value
+extern bool Writeuint8WordACK(uint32 data0, uint8 data1);
+extern bool Writeuint16WordACK(uint32 data0, uint16 data1);
+extern bool Writeuint32WordACK(uint32 data0, uint32 data1);
+
+extern bool SendMultipleWordACK(uint32 data0, uint32 data1, uint32 data2, uint32 data3);
+extern uint32 SendMultipleWordByFifo(uint32 data0, uint32 data1, uint32 data2, uint32 data3, uint32 data4);
 
 /*
 extern void sendbyte_ipc(uint8 word);

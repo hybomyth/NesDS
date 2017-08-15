@@ -77,7 +77,8 @@ void do_rommenu() {
 	ips_stat = 0;		//disable ips first.
 
 	//fifoSendValue32(FIFO_USER_08, FIFO_APU_PAUSE);			//disable sound when selecting a rom.
-	SendArm7Command(FIFO_APU_PAUSE,0x0,0x0,0x0);
+	//SendArm7Command(FIFO_APU_PAUSE,0x0,0x0,0x0);
+	SendMultipleWordACK(FIFO_APU_PAUSE,0x0,0x0,0x0);
 	
 	if(!global_roms) {
 		roms=init_rommenu();

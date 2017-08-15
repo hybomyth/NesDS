@@ -1700,8 +1700,8 @@ static void wifiValue32Handler(u32 value, void* data) {
 // callback to allow wifi library to notify arm9
 void arm7_synctoarm9() { 
 	//fifoSendValue32(FIFO_DSWIFI, WIFI_SYNC);
-	SendArm9Command(WIFI_SYNC,0x0,0x0,0x0);
-	
+	//SendArm9Command(WIFI_SYNC,0x0,0x0,0x0);
+	SendMultipleWordACK(WIFI_SYNC, 0, 0, 0);
 }
 
 
