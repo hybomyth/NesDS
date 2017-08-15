@@ -273,13 +273,11 @@ inline bool NiFiHandler(int packetID, int readlength, u8 * data){
 						__af_st = __af_start;
 						menu_game_reset();	//menu is closed.
 					}
-					/*
 					else {		//bad crc. disconnect the comm.
 						nifi_stat = 0;
 						nifi_cmd &= ~MP_CONN;
 						sendcmd((u8*)&nfdata[0]);
 					}
-					*/
 				}
 				break;
 			case 4:
@@ -299,11 +297,9 @@ inline bool NiFiHandler(int packetID, int readlength, u8 * data){
 						__af_st = __af_start;
 						menu_game_reset();	//menu is closed.
 					}
-					/*
 					else {					//CRC error, the both sides should choose the some game.
 						nifi_stat = 0;
 					}
-					*/
 				}
 				break;
 		}
@@ -388,17 +384,26 @@ inline void Handler(int packetID, int readlength)
 //0 idle, 1 nifi, 2 dswnifi
 void switch_dswnifi_mode(u8 mode){
 
-	//wifi
+	//wifi minimal setup
 	if(mode == (u8)dswifi_wifimode){
 		MyIPC->dswifiSrv.dsnwifisrv_mode = dswifi_wifimode;
 		MyIPC->dswifiSrv.dsnwifisrv_stat = ds_searching_for_multi_servernotaware;
 		MyIPC->dswifiSrv.dswifi_setup = false;	//set for RPC services
 	}
+	//nifi minimal setup
 	else if (mode == (u8)dswifi_nifimode){
 		//nifi
 		MyIPC->dswifiSrv.dsnwifisrv_mode = dswifi_nifimode;
 		MyIPC->dswifiSrv.dswifi_setup = false;
 	}
+	
+	//idle mode minimal setup
+	else if (mode == (u8)dswifi_idlemode){
+		//nifi
+		MyIPC->dswifiSrv.dsnwifisrv_mode = dswifi_idlemode;
+		MyIPC->dswifiSrv.dswifi_setup = false;
+	}
+	
 	
 	//set NIFI mode
 	if( (MyIPC->dswifiSrv.dsnwifisrv_mode == dswifi_nifimode) && (MyIPC->dswifiSrv.dswifi_setup == false)){

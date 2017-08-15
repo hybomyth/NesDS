@@ -20,11 +20,9 @@
 #include "netinet/in.h"
 #include <netdb.h>
 #include <ctype.h>
-#include <fat.h>
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
-#include <fat.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdarg.h>
@@ -47,7 +45,7 @@
 
 
 //0 not ready, 1 act as a host and waiting, 2 act as a guest and waiting, 3 connecting, 4 connected, 5 host ready, 6 guest ready
-int nifi_stat = 0;
+int nifi_stat = 0;	//start as idle always
 int nifi_cmd = 0;
 int nifi_keys = 0;		//holds the keys for players. player1 included
 int plykeys1 = 0;		//player1
@@ -562,21 +560,22 @@ inline bool do_multi()
 			break;
 		}
 		
-		
 		return true;	//exit
 	}
 	
-	else if(MyIPC->dswifiSrv.dsnwifisrv_mode == dswifi_nifimode){
+	else if(MyIPC->dswifiSrv.dsnwifisrv_mode == dswifi_nifimode){	//detect nifi_stat here if nifi_stat = 0 for disconnect when nifi was issued
 		static int count = 0;
-		if(!nifi_stat) {
-			if(nifi_cmd & MP_NFEN) {
-				Wifi_DisableWifi();
-				nifi_cmd &= ~MP_NFEN;
-			}
-			return false;
-		}
-		
 		switch(nifi_stat) {
+			case 0:{
+				if(nifi_cmd & MP_NFEN) {
+					Wifi_DisableWifi();
+					nifi_cmd &= ~MP_NFEN;
+					
+					switch_dswnifi_mode((u8)dswifi_idlemode); //self disconnect
+				}
+				return false;
+			}
+			break;
 			case 1:		//act as a host, waiting for another player.
 				if(!(nifi_cmd & MP_NFEN)){
 					Wifi_EnableWifi();
@@ -594,10 +593,12 @@ inline bool do_multi()
 							Wifi_RawTxFrame_NIFI(sizeof(nifitoken), 0x0014, (unsigned short *)nifitoken);
 						}
 						break;
+						/*
 						case dswifi_wifimode:{
 							Wifi_RawTxFrame_WIFI(sizeof(nifitoken), (u8*)nifitoken);
 						}
 						break;
+						*/
 					}
 		
 					count = 0;
@@ -615,10 +616,12 @@ inline bool do_multi()
 							Wifi_RawTxFrame_NIFI(sizeof(nificonnect), 0x0014, (unsigned short *)nificonnect);
 						}
 						break;
+						/*
 						case dswifi_wifimode:{
 							Wifi_RawTxFrame_WIFI(sizeof(nificonnect), (u8*)nificonnect);
 						}
 						break;
+						*/
 					}
 					
 					count = 0;
@@ -637,10 +640,12 @@ inline bool do_multi()
 							Wifi_RawTxFrame_NIFI(6, 0x0014, (unsigned short *)nificrc);
 						}
 						break;
+						/*
 						case dswifi_wifimode:{
 							Wifi_RawTxFrame_WIFI(6, (u8*)nificrc);
 						}
 						break;
+						*/
 					}
 					
 					count = 0;
@@ -664,7 +669,12 @@ inline bool do_multi()
 			break;
 			
 		}
+		
+		return true;
 	}
 	
-	return true;
+	else{
+		return false;
+	}
+	
 }

@@ -1,5 +1,4 @@
 #include <nds.h>
-#include <fat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -8,6 +7,8 @@
 #include "menu.h"
 
 #include "common_shared.h"
+#include "nifi.h"
+#include "multi.h"
 
 extern u32 agb_bg_map[];
 
@@ -518,16 +519,20 @@ void menu_nifi_action(void)
 	if(lastbutton && touchstate == 4) {
 		if(lastbutton_type == 2) {
 			switch(lastbutton_cnt) {
-			case 0:
-				if(!nifi_stat)
+				case 0:{
 					nifi_stat = 1;
+					switch_dswnifi_mode((u8)dswifi_nifimode);	//should be handled later at multi (nifimode)
+				}
 				break;
-			case 1:
-				if(!nifi_stat)
+				case 1:{
 					nifi_stat = 2;
+					switch_dswnifi_mode((u8)dswifi_nifimode);	//should be handled later at multi (nifimode)	
+				}
 				break;
-			case 2:
-				//nifi_stat = 0;
+				case 2:{
+					nifi_stat = 0;
+					switch_dswnifi_mode((u8)dswifi_nifimode);	//disconnect should will happen later (requires nifimode)
+				}
 				break;
 			}
 			consoletext(64*20+2, nifi_chars[nifi_stat], 0);

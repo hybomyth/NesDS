@@ -1,5 +1,4 @@
 #include <nds.h>
-#include <fat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -189,10 +188,8 @@ int main(int _argc, char **_argv) {
 	
 	//__emuflags |= PALSYNC;
 	
-	//nifi: 
-	//switch_dswnifi_mode((u8)dswifi_nifimode);
-	//wifi: 
-	switch_dswnifi_mode((u8)dswifi_wifimode);
+	//idle: default startup
+	switch_dswnifi_mode((u8)dswifi_idlemode);
 	
 	while(1) { // main loop to do the emulation
 		
@@ -257,11 +254,11 @@ int main(int _argc, char **_argv) {
 		do_multi();	//add multi dswifi support
 		
 		
-		//single player
+		//single player (for idle, nifi & udp netplay)
 		if(nifi_stat == 0 ){
 			play(); //emulate a frame of the NES game.
 		}
-		//multi player
+		//multi player	(for idle, nifi & udp netplay)
 		else if((nifi_stat == 5) || (nifi_stat == 6)){
 			
 			if(getintdiff(host_framecount,guest_framecount) > 0){
@@ -337,9 +334,10 @@ void play() {
 	if(global_playcount > 6)
 		global_playcount = 0;
 
-	if(nifi_stat)
+	if(nifi_stat){
 		__emuflags &= ~(FASTFORWARD | REWIND);		//when nifi enabled, disable the fastforward & rewind.
-
+	}
+	
 	forward = __emuflags & FASTFORWARD;
 	backward = __emuflags & REWIND;
 	

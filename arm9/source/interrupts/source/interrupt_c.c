@@ -40,39 +40,43 @@ bool nds_vblank = false;
 __attribute__((section(".itcm")))
 void Vblank() {
 //---------------------------------------------------------------------------------
-	if(nifi_stat == 0){
-		
+	
+	//update when idle
+	if((MyIPC->dswifiSrv.dsnwifisrv_mode == dswifi_idlemode) || (MyIPC->dswifiSrv.dsnwifisrv_mode == dswifi_nifimode)){
 		EMU_VBlank();
-	}
-	else if( (nifi_stat == 5) || (nifi_stat == 6) ) {
-		
-		//update each host/guest framecounts
-		if(nifi_stat == 5){
-			host_framecount 	= nesds_framecount;
-		}
-		
-		if(nifi_stat == 6){
-			guest_framecount	= nesds_framecount;
-		}
-		
-		EMU_VBlank();
-		//iprintf("vblank! \n");
-		
-		if(nifi_stat == 5){
-		
-			//NDS -> NES PPU frame counter
-			if(nesds_framecount > 59) {
-				nesds_framecount=0;
-			}
-			else{
-				nesds_framecount++;
-			}
-			debuginfo[VBLS] = nesds_framecount;
-		
-		}
-		
 	}
 	
+	//only update when connected
+	else if(MyIPC->dswifiSrv.dsnwifisrv_mode == dswifi_wifimode){
+		if( (nifi_stat == 5) || (nifi_stat == 6) ) {
+			
+			//update each host/guest framecounts
+			if(nifi_stat == 5){
+				host_framecount 	= nesds_framecount;
+			}
+			
+			if(nifi_stat == 6){
+				guest_framecount	= nesds_framecount;
+			}
+			
+			EMU_VBlank();
+			//iprintf("vblank! \n");
+			
+			if(nifi_stat == 5){
+			
+				//NDS -> NES PPU frame counter
+				if(nesds_framecount > 59) {
+					nesds_framecount=0;
+				}
+				else{
+					nesds_framecount++;
+				}
+				debuginfo[VBLS] = nesds_framecount;
+			
+			}
+			
+		}
+	}
 	
 }
 
