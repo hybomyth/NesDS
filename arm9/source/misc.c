@@ -33,24 +33,6 @@ void reg4015interrupt(u32 msg, void *none)
 			addr: no known
 * description:		none
 ******************************/
-//ori
-/*
-void writeAPU(u32 val,u32 addr) 
-{
-	if(IPC_APUW - IPC_APUR < 256 && addr != 0x4011 && 
-			((addr > 0x8000 && (debuginfo[16] == 24 || debuginfo[16] == 26)) ||
-			(addr < 0x4018 || debuginfo[16] == 20))) {
-		fifoSendValue32(FIFO_USER_07,(addr << 8) | val);
-		IPC_APUW++;
-	}
-	if(addr == 0x4011) {
-		unsigned char *out = IPC_PCMDATA;
-		out[__scanline] = val | 0x80;
-		*(IPC_APUWRITE + (addr & 0xFF)) = 0x100 | val;
-	}
-}
-*/
-
 void writeAPU(u32 val,u32 addr) 
 {
 	if(IPC_APUW - IPC_APUR < 256 && addr != 0x4011 && 
@@ -58,10 +40,9 @@ void writeAPU(u32 val,u32 addr)
 			(addr < 0x4018 || debuginfo[16] == 20))) {
 		
 		//IO Write direct
-		//SendArm7Command(FIFO_APU_WRITE16,(u32)((addr << 8) | val),0x0,0x0);
-		SendMultipleWordACK(FIFO_APU_WRITE16,(u32)((addr << 8) | val),0x0,0x0);
-		
-		IPC_APUW++; //fifo IPC_APUW update arm9notify when readAPU @ ARM7 is done
+		if(WriteAPUNESACK(addr, val) == true){
+			IPC_APUW++; //fifo IPC_APUW update arm9notify when readAPU @ ARM7 is done
+		}
 	}
 	if(addr == 0x4011) {
 		unsigned char *out = IPC_PCMDATA;

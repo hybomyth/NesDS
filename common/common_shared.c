@@ -232,6 +232,27 @@ inline uint32 SendMultipleWordByFifo(uint32 data0, uint32 data1, uint32 data2, u
 	return MyIPC->fiforeply;
 }
 
+//project specific
+
+//extern void APUSoundWrite(Uint address, Uint value);
+#ifdef ARM9 //arm9 only
+__attribute__((section(".itcm")))
+inline bool WriteAPUNESACK(uint32 data0, uint32 data1){			
+	
+	//invalidate cache here (arm9)
+	//Prevent Cache problems.
+	DC_FlushRange((uint32*)data0, (int)4);
+	
+	uint32 reply = SendMultipleWordByFifo((uint32)fifo_apunes_write, (uint32)data0, (uint32)data1, (uint32)0, (uint32)0);
+	if(reply == data1){
+		return true;
+	}
+	return false;
+}
+#endif
+
+
+
 //FIFO HANDLER INIT
 #ifdef ARM9
 __attribute__((section(".itcm")))
@@ -293,21 +314,7 @@ inline void HandleFifoNotEmpty(){
 			}
 			break;
 			
-			//must be called from within timer irqs
-			//update apu from nds irq
-			case(FIFO_APU_WRITE16):{
-				
-				//method 1
-				//stack to fifo here
-				SetSoftFIFO(cmd3);
-				
-				//method 2
-				//u16 msg = (u16)(command2&0xffff);
-				//APUSoundWrite(msg >> 8, msg&0xFF);
-				//IPC_APUR = IPC_APUW;			
 			
-			}
-			break;
 			
 			//arm9 wants to send a WIFI context block address / userdata is always zero here
 			case(0xc1710101):{
@@ -400,6 +407,14 @@ inline void HandleFifoNotEmpty(){
 		MyIPC->fiforeply = *(uint32*)cmd2;	//works with cmd2 passed directly
 	}
 	
+	//project specific
+	#ifdef ARM7
+	//APUSoundWrite(Uint address, Uint value);
+	else if(cmd1 == fifo_apunes_write){
+		APUSoundWrite(cmd2, cmd3);
+	}
+	#endif
+	
 	//ok, send empty signal
 	REG_IPC_FIFO_CR |= IPC_FIFO_ERROR;
 	
@@ -408,68 +423,16 @@ inline void HandleFifoNotEmpty(){
 
 //FIFO HANDLER END
 
+
+
+
+
 #ifdef ARM9
 void apusetup(){
 	MyIPC->IPC_ADDR = (u32*)ipc_region;
 	MyIPC->apu_ready = true;
 }
 #endif
-
-/*
-//coto: in case you're wondering, these opcodes allow to reach specific region memory that is not available from the other core.
-
-// u32 address, u8 read_mode (0 : u32 / 1 : u16 / 2 : u8)
-#ifdef ARM9
-__attribute__((section(".itcm")))
-#endif
-inline u32 read_ext_cpu(u32 address,u8 read_mode){
-    #ifdef ARM7
-        MyIPC->status |= ARM9_BUSYFLAGRD;
-        SendArm9Command(0xc2720000, address, read_mode,0x00000000);
-        while(MyIPC->status & ARM9_BUSYFLAGRD){}
-    #endif
-        
-    #ifdef ARM9
-        MyIPC->status |= ARM7_BUSYFLAGRD;
-        SendArm7Command(0xc2720000, address, read_mode,0x00000000);
-        while(MyIPC->status & ARM7_BUSYFLAGRD){}
-    #endif
-    
-    return (u32)MyIPC->buf_queue[0];
-}
-
-//Direct writes: Write ARMx<->ARMx opcodes:
-// u32 address, u8 write_mode (0 : u32 / 1 : u16 / 2 : u8)
-#ifdef ARM9
-__attribute__((section(".itcm")))
-#endif
-inline void write_ext_cpu(u32 address,u32 value,u8 write_mode){
-
-    #ifdef ARM7
-        MyIPC->status |= ARM9_BUSYFLAGWR;
-        SendArm9Command(0xc2720001, address, write_mode, value);
-        while(MyIPC->status& ARM9_BUSYFLAGWR){}
-    #endif
-        
-    #ifdef ARM9
-        MyIPC->status |= ARM7_BUSYFLAGWR;
-        SendArm7Command(0xc2720001, address, write_mode, value);
-        while(MyIPC->status& ARM7_BUSYFLAGWR){}
-    #endif
-    
-}
-
-//NDS hardware IPC
-void sendbyte_ipc(uint8 word){
-	//checkreg writereg (add,val) static int REG_IPC_add=0x04000180,REG_IE_add=0x04000210,REG_IF_add=0x04000214;
-	*((u32*)0x04000180)=((*(u32*)0x04000180)&0xfffff0ff) | (word<<8);
-}
-
-u8 recvbyte_ipc(){
-	return ((*(u32*)0x04000180)&0xf);
-}
-
-*/
 
 
 

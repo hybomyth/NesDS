@@ -41,6 +41,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 #define fifo_readuint8_ack	(uint32)(0xffff1016)
 
+//project specific
+#define fifo_apunes_write	(uint32)(0xffff1017)
 
 //---------------------------------------------------------------------------------
 typedef struct sMyIPC {
@@ -144,7 +146,6 @@ typedef struct sMyIPC {
 #define FIFO_UNPAUSE 0x1202
 #define FIFO_APU_RESET 0x1204
 #define FIFO_SOUND_RESET 0x1206
-#define FIFO_APU_WRITE16 0X1207
 
 #define FIFO_APU_BUSY 1
 
@@ -176,6 +177,11 @@ extern bool Writeuint32WordACK(uint32 data0, uint32 data1);
 
 extern bool SendMultipleWordACK(uint32 data0, uint32 data1, uint32 data2, uint32 data3);
 extern uint32 SendMultipleWordByFifo(uint32 data0, uint32 data1, uint32 data2, uint32 data3, uint32 data4);
+
+//project specific
+#ifdef ARM9
+extern bool WriteAPUNESACK(uint32 data0, uint32 data1);
+#endif
 
 /*
 extern void sendbyte_ipc(uint8 word);
