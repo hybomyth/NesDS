@@ -286,8 +286,6 @@ namespace ConsoleApplication1
                                 //DS1
                                 sendaware_req("srvaware", nds_session_list[nds1_index].ip, ip_dest_ds1, ds1_mode);
                                 
-                                Thread.Sleep(3000);  //3s
-
                                 //DS2
                                 sendaware_req("srvaware", nds_session_list[nds2_index].ip, ip_dest_ds2, ds2_mode);   
                                 Console.WriteLine("DS's are binded correctly :)");
@@ -353,38 +351,7 @@ namespace ConsoleApplication1
                         break;
                 }
             });
-            /*
-            //create a new client
-            var client = UdpUser.ConnectTo("192.168.43.107", 8888); //("127.0.0.1", 32123); //("192.168.43.108", 2444);
-
-            //wait for reply messages from server and send them to console 
-            Task.Factory.StartNew(async () =>
-            {
-                while (true)
-                {
-                    try
-                    {
-                        var received = await client.Receive();
-                        Console.WriteLine(received.Message);
-                        if (received.Message.Contains("quit"))
-                            break;
-                    }
-                    catch (Exception ex)
-                    {
-                        //Debug.Write(ex);
-                        Console.WriteLine("exception:"+ex.Message);
-                    }
-                }
-            });
-
-            //type ahead :-)
-            string read;
-            do
-            {
-                read = Console.ReadLine();
-                client.Send(read);
-            } while (read != "quit");
-            */
+            
 
             while (ConsoleKey.Escape != Console.ReadKey().Key)
             {

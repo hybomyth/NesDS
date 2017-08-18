@@ -101,6 +101,15 @@ inline void FIFO_DRAINWRITE(){
 }
 
 
+// Discards a SendArm[7/9]Command (FIFO message) so both cores don't lock at the same time. 
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+inline void FIFO_RELEASE(){
+	REG_IPC_FIFO_CR |= IPC_FIFO_SEND_CLEAR;
+}
+
+
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
@@ -216,7 +225,7 @@ __attribute__((section(".itcm")))
 #endif
 inline uint32 SendMultipleWordByFifo(uint32 data0, uint32 data1, uint32 data2, uint32 data3, uint32 data4)	//channel / multiple words / err reporting
 {	
-	FIFO_DRAINWRITE();
+	FIFO_DRAINWRITE();	//should be cleared here from the other core
 	
 	//data4 to be used from other core
 	REG_IPC_FIFO_TX =	(uint32)data0; 	//raise irq here
@@ -225,9 +234,9 @@ inline uint32 SendMultipleWordByFifo(uint32 data0, uint32 data1, uint32 data2, u
 	REG_IPC_FIFO_TX = 	(uint32)data3;
 	REG_IPC_FIFO_TX = 	(uint32)data4;
 	
-	FIFO_DRAINWRITE();
-	 
-	REG_IPC_FIFO_CR |= (1<<3); //3     W    Send Fifo Clear             (0=Nothing, 1=Flush Send Fifo)
+	//ok, send full signal (raises irq on other core, pending send messages) then goes back here
+	REG_IPC_FIFO_CR |= IPC_FIFO_ERROR;
+	while(REG_IPC_FIFO_CR & IPC_FIFO_ERROR){}	//wait for ack
 	
 	return MyIPC->fiforeply;
 }
@@ -326,6 +335,7 @@ inline void HandleFifoNotEmpty(){
 			
 			//ARM9 command handler
 			#ifdef ARM9
+			//arm7 wants to WifiSync
 			case(WIFI_SYNC):{
 				Wifi_Sync();
 			}
@@ -415,7 +425,7 @@ inline void HandleFifoNotEmpty(){
 	}
 	#endif
 	
-	//ok, send empty signal
+	//ok, send acknowledge signal
 	REG_IPC_FIFO_CR |= IPC_FIFO_ERROR;
 	
 }

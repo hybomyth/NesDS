@@ -46,7 +46,7 @@ void Vblank() {
 		EMU_VBlank();
 	}
 	
-	//only update when connected
+	//only update screen when connected
 	else if(MyIPC->dswifiSrv.dsnwifisrv_mode == dswifi_wifimode){
 		if( (nifi_stat == 5) || (nifi_stat == 6) ) {
 			

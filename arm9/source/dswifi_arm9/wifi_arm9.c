@@ -1028,7 +1028,10 @@ void arm9_synctoarm7() {
 //---------------------------------------------------------------------------------
 	//fifoSendValue32(FIFO_DSWIFI, WIFI_SYNC);
 	//SendArm7Command(WIFI_SYNC,0x0,0x0,0x0);
-	SendMultipleWordACK(WIFI_SYNC, 0, 0, 0);
+	
+	if(SendMultipleWordACK(WIFI_SYNC, 0, 0, 0) == true){
+		FIFO_RELEASE();
+	}
 }
 
 /*
@@ -1092,3 +1095,11 @@ bool Wifi_InitDefault(bool useFirmwareSettings) {
 	return true;
 }
 
+
+//don't touch REG_IME due to new IPC, only let IME to be enabled/disabled when an interrupt happens.
+void SGIP_INTR_PROTECT(){
+}
+void SGIP_INTR_REPROTECT(){
+}
+void SGIP_INTR_UNPROTECT(){
+}

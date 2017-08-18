@@ -60,15 +60,10 @@ int main() {
     irqSet(IRQ_TIMER1, soundinterrupt);
     
 	irqSet(IRQ_FIFO_NOT_EMPTY,HandleFifoNotEmpty);
-    //irqSet(IRQ_FIFO_EMPTY,HandleFifoEmpty);
-    
 	irqEnable(interrupts_to_wait_arm7);
     
     REG_IPC_SYNC = 0;
-    REG_IPC_FIFO_CR = IPC_FIFO_RECV_IRQ;			//10    R/W  Receive Fifo Not Empty IRQ  (0=Disable, 1=Enable)
-	//REG_IPC_FIFO_CR |= (1<<2);  					//send empty irq
-    REG_IPC_FIFO_CR |= IPC_FIFO_ENABLE;
-	
+    REG_IPC_FIFO_CR = IPC_FIFO_RECV_IRQ | IPC_FIFO_ENABLE;			//10    R/W  Receive Fifo Not Empty IRQ  (0=Disable, 1=Enable)
 	
     //set up ppu: do irq on hblank/vblank/vcount/and vcount line is 159
     REG_DISPSTAT = REG_DISPSTAT | DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ | (VCOUNT_LINE_INTERRUPT << 15);

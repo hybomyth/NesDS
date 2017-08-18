@@ -147,13 +147,12 @@ int main(int _argc, char **_argv) {
 	irqSet(IRQ_HBLANK,Hblank);
 	irqSet(IRQ_VCOUNT,vcounter);
 	irqSet(IRQ_FIFO_NOT_EMPTY,HandleFifoNotEmpty);
-    irqSet(IRQ_FIFO_EMPTY,HandleFifoEmpty);
-	
-	interrupts_to_wait_arm9 = IRQ_HBLANK|IRQ_VBLANK|IRQ_VCOUNT| IRQ_FIFO_NOT_EMPTY |IRQ_FIFO_EMPTY;
+    
+	interrupts_to_wait_arm9 = IRQ_HBLANK|IRQ_VBLANK|IRQ_VCOUNT| IRQ_FIFO_NOT_EMPTY;
 	irqEnable(interrupts_to_wait_arm9);
 	
 	REG_IPC_SYNC = 0;
-    REG_IPC_FIFO_CR = IPC_FIFO_RECV_IRQ | IPC_FIFO_SEND_IRQ | IPC_FIFO_ENABLE;
+    REG_IPC_FIFO_CR = IPC_FIFO_RECV_IRQ | IPC_FIFO_ENABLE;	//10    R/W  Receive Fifo Not Empty IRQ  (0=Disable, 1=Enable)
     
     //set up ppu: do irq on hblank/vblank/vcount/and vcount line is 159
     REG_DISPSTAT = REG_DISPSTAT | DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ | (VCOUNT_LINE_INTERRUPT << 15);
@@ -189,7 +188,8 @@ int main(int _argc, char **_argv) {
 	//__emuflags |= PALSYNC;
 	
 	//idle: default startup
-	switch_dswnifi_mode((u8)dswifi_idlemode);
+	//switch_dswnifi_mode((u8)dswifi_idlemode);
+	switch_dswnifi_mode((u8)dswifi_wifimode);
 	
 	//test case #1: write external uint32 ..ok
 	/*
@@ -323,54 +323,82 @@ int main(int _argc, char **_argv) {
 
 		touch_update(); // do menu functions.
 		do_menu();	//do control menu.
-		do_multi();	//add multi dswifi support
+		bool dswnifi_frame = do_multi();	//add multi dswifi support
 		
 		
-		//single player (for idle, nifi & udp netplay)
-		if(nifi_stat == 0 ){
-			play(); //emulate a frame of the NES game.
+		//single player (for idle, nifi)
+		if((MyIPC->dswifiSrv.dsnwifisrv_mode == dswifi_idlemode) || (MyIPC->dswifiSrv.dsnwifisrv_mode == dswifi_nifimode)){
+			if(nifi_stat == 0){
+				play(); //emulate a frame of the NES game.
+			}
 		}
-		//multi player	(for idle, nifi & udp netplay)
-		else if((nifi_stat == 5) || (nifi_stat == 6)){
+		
+		//multi player	(for nifi)
+		if(MyIPC->dswifiSrv.dsnwifisrv_mode == dswifi_nifimode){
 			
-			if(getintdiff(host_framecount,guest_framecount) > 0){
-				int diff_framecount = getintdiff(host_framecount,guest_framecount);
-				int top = topvalue(nesds_framecount,diff_framecount);
-				int bottom = bottomvalue(nesds_framecount,diff_framecount);
-				//host: read only 	guest_framecount
-				if(nifi_stat == 5){
-					nesds_framecount = top - bottom;
+			if((nifi_stat == 5) || (nifi_stat == 6)){
+				
+				if(getintdiff(host_framecount,guest_framecount) > 0){
+					int diff_framecount = getintdiff(host_framecount,guest_framecount);
+					int top = topvalue(nesds_framecount,diff_framecount);
+					int bottom = bottomvalue(nesds_framecount,diff_framecount);
+					//host: read only 	guest_framecount
+					if(nifi_stat == 5){
+						nesds_framecount = top - bottom;
+					}
+					//guest: read only 	host_framecount
+					if(nifi_stat == 6){
+						nesds_framecount = top - bottom;
+					}
 				}
-				//guest: read only 	host_framecount
-				if(nifi_stat == 6){
-					nesds_framecount = top - bottom;
-				}
-			}
-			
-			//nds sync ppus
-			int framediff = getintdiff(host_vcount,guest_vcount);
-			int calc_vcount = 0;
-			if(framediff > 0){
-				//#1 sync LY VCOUNT
-				int top2 = topvalue(host_vcount,framediff);
-				int bottom2 = bottomvalue(host_vcount,framediff);	
-				calc_vcount = top2 - bottom2;
-			}
-			
-			int nds_vc = (REG_VCOUNT&0xff);
-			if((nds_vc >= 202 ) && (nds_vc <= 212) ){
+				
+				//nds sync ppus
+				int framediff = getintdiff(host_vcount,guest_vcount);
+				int calc_vcount = 0;
 				if(framediff > 0){
-					//update only if we have a valid nifi frame
-					REG_VCOUNT = calc_vcount;
+					//#1 sync LY VCOUNT
+					int top2 = topvalue(host_vcount,framediff);
+					int bottom2 = bottomvalue(host_vcount,framediff);	
+					calc_vcount = top2 - bottom2;
 				}
-				swiIntrWait(1,IRQ_VCOUNT);
+				
+				int nds_vc = (REG_VCOUNT&0xff);
+				if((nds_vc >= 202 ) && (nds_vc <= 212) ){
+					if(framediff > 0){
+						//update only if we have a valid nifi frame
+						REG_VCOUNT = calc_vcount;
+					}
+					swiIntrWait(1,IRQ_VCOUNT);
+				}
+				
+				nifi_keys =  nifi_keys_sync;
+				play();
+				
 			}
-			
-			nifi_keys =  nifi_keys_sync;
-			play();
-			
 		}
 		
+		//multi player	(for wifi)
+		else if (MyIPC->dswifiSrv.dsnwifisrv_mode == dswifi_wifimode){
+			if(dswnifi_frame == true){
+				nifi_keys =  nifi_keys_sync;
+				play();
+			}
+			uint8 val = rand()&0xf;
+			volatile char buf[128];
+			if(dswnifi_frame == true){
+				sprintf((char*)buf,"frameok:%d! ________________________________",val);
+				consoletext(64*2-32,(char*)buf,0);
+			}
+			else{
+				sprintf((char*)buf,"framephail:%d! ________________________________",val);
+				consoletext(64*2-32,(char*)buf,0);
+				
+				//nifi_stat = 0;
+				//switch_dswnifi_mode((u8)dswifi_idlemode);
+				
+				
+			}
+		}
 		
 		swiWaitForVBlank();
 		

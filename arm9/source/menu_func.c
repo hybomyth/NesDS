@@ -520,20 +520,26 @@ void menu_nifi_action(void)
 		if(lastbutton_type == 2) {
 			switch(lastbutton_cnt) {
 				case 0:{
-					nifi_stat = 1;
-					switch_dswnifi_mode((u8)dswifi_nifimode);	//should be handled later at multi (nifimode)
+					if(MyIPC->dswifiSrv.dsnwifisrv_mode != dswifi_wifimode){	//cant enable nifi if wifimode is active
+						nifi_stat = 1;
+						switch_dswnifi_mode((u8)dswifi_nifimode);	//should be handled later at multi (nifimode)
+					}
 				}
 				break;
 				case 1:{
-					nifi_stat = 2;
-					switch_dswnifi_mode((u8)dswifi_nifimode);	//should be handled later at multi (nifimode)	
+					if(MyIPC->dswifiSrv.dsnwifisrv_mode != dswifi_wifimode){	//cant enable nifi if wifimode is active
+						nifi_stat = 2;
+						switch_dswnifi_mode((u8)dswifi_nifimode);	//should be handled later at multi (nifimode)	
+					}
 				}
 				break;
 				case 2:{
-					nifi_stat = 0;
+					nifi_stat = 0;								//cancel nifi & wifi buttons
 					switch_dswnifi_mode((u8)dswifi_nifimode);	//disconnect should will happen later (requires nifimode)
 				}
 				break;
+				
+				//todo: new wifi button
 			}
 			consoletext(64*20+2, nifi_chars[nifi_stat], 0);
 		}

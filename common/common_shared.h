@@ -201,6 +201,8 @@ extern u8 gba_get_secrtc();
 
 //FIFO 
 extern void FIFO_DRAINWRITE();
+extern void FIFO_RELEASE();
+
 extern bool SetSoftFIFO(u32 value);
 extern bool GetSoftFIFO(u32 * var);
 

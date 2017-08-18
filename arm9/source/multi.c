@@ -420,14 +420,12 @@ inline bool do_multi()
 							
 							//stop sending data, server got it already.
 							MyIPC->dswifiSrv.dsnwifisrv_stat = ds_netplay_host_servercheck;
-							//nifi_stat = 1;
 						}
 						else if(guest_mode == 0){
 							sprintf(buf,"[guest]binding OK MULTI: port [%d] IP: [%s]  \n",LISTENER_PORT, (const char*)print_ip((u32)Wifi_GetIP()));//(char*)print_ip((u32)Wifi_GetIP()));
 							sprintf(id,"[guest]");
 							//stop sending data, server got it already.
 							MyIPC->dswifiSrv.dsnwifisrv_stat = ds_netplay_guest_servercheck;
-							//nifi_stat = 2;
 						}
 						
 						//note: bind UDPsender?: does not work with UDP Datagram socket format (UDP basically)
@@ -544,10 +542,12 @@ inline bool do_multi()
 						
 						//data is now nifi frame
 						if(crc16_frame_gen == crc16_recv_frame){			
-							getcmd((u8*)&inputbuf[0]);
+							getcmd((u8*)&inputbuf[0]);	
 							
 							//sprintf(buf,"[FRAME CRC OK]");
 							//consoletext(64*2-32,(char *)&buf[0],0);
+							
+							return true;	//exit. dswnifi_frame valid
 						}
 						else{
 							//sprintf(buf,"[%xFRAME CRC CORRUPTED]",(u8)inputbuf[0]);
@@ -560,7 +560,7 @@ inline bool do_multi()
 			break;
 		}
 		
-		return true;	//exit
+		return false;	//exit. dswnifi_frame invalid
 	}
 	
 	else if(MyIPC->dswifiSrv.dsnwifisrv_mode == dswifi_nifimode){	//detect nifi_stat here if nifi_stat = 0 for disconnect when nifi was issued

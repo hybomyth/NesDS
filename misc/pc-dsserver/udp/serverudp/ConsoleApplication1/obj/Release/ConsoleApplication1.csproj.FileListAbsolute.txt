@@ -1,0 +1,6 @@
+C:\MinGW\msys\1.0\home\NesDS\misc\pc-dsserver\udp\serverudp\ConsoleApplication1\bin\Release\ConsoleApplication1.exe.config
+C:\MinGW\msys\1.0\home\NesDS\misc\pc-dsserver\udp\serverudp\ConsoleApplication1\bin\Release\ConsoleApplication1.exe
+C:\MinGW\msys\1.0\home\NesDS\misc\pc-dsserver\udp\serverudp\ConsoleApplication1\bin\Release\ConsoleApplication1.pdb
+C:\MinGW\msys\1.0\home\NesDS\misc\pc-dsserver\udp\serverudp\ConsoleApplication1\obj\Release\ConsoleApplication1.csprojResolveAssemblyReference.cache
+C:\MinGW\msys\1.0\home\NesDS\misc\pc-dsserver\udp\serverudp\ConsoleApplication1\obj\Release\ConsoleApplication1.exe
+C:\MinGW\msys\1.0\home\NesDS\misc\pc-dsserver\udp\serverudp\ConsoleApplication1\obj\Release\ConsoleApplication1.pdb

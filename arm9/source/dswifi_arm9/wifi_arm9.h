@@ -105,6 +105,12 @@ extern u32 Wifi_GetIP();
 extern int Wifi_RawTxFrame_NIFI(u16 datalen, u16 rate, u16 * data);
 
 extern void Timer_50ms(void);
+
+
+extern void SGIP_INTR_PROTECT();
+extern void SGIP_INTR_REPROTECT();
+extern void SGIP_INTR_UNPROTECT();
+
 #ifdef __cplusplus
 }
 #endif

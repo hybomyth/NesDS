@@ -1701,7 +1701,9 @@ static void wifiValue32Handler(u32 value, void* data) {
 void arm7_synctoarm9() { 
 	//fifoSendValue32(FIFO_DSWIFI, WIFI_SYNC);
 	//SendArm9Command(WIFI_SYNC,0x0,0x0,0x0);
-	SendMultipleWordACK(WIFI_SYNC, 0, 0, 0);
+	if(SendMultipleWordACK(WIFI_SYNC, 0, 0, 0) == true){
+		FIFO_RELEASE();
+	}
 }
 
 
