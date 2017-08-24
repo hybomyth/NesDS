@@ -18,7 +18,7 @@ extern void soundinterrupt(void);
 extern int pcmpos;
 extern int APU_paused;
 
-extern void readAPU(void);
+extern void readAPU();
 extern void resetAPU(void);
 extern void dealrawpcm(unsigned char *out);
 

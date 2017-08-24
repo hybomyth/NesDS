@@ -188,8 +188,8 @@ int main(int _argc, char **_argv) {
 	//__emuflags |= PALSYNC;
 	
 	//idle: default startup
-	//switch_dswnifi_mode((u8)dswifi_idlemode);
-	switch_dswnifi_mode((u8)dswifi_wifimode);
+	switch_dswnifi_mode((u8)dswifi_idlemode);
+	//switch_dswnifi_mode((u8)dswifi_wifimode);
 	
 	//test case #1: write external uint32 ..ok
 	/*
@@ -262,6 +262,30 @@ int main(int _argc, char **_argv) {
 	while(1);
 	*/
 	
+	//test case : WriteAPUNESACK
+	/*
+	bool res = SendMultipleWordACK(fifo_nesapuwrite_ext,(u32)(0),(u32)(0),(u32)(0));
+	volatile uint32 buf;
+	volatile char writebuf[256];
+	if(res == true){
+		sprintf((char*)writebuf,"WriteAPUNESACK:OK:%x",(unsigned int)MyIPC->fiforeply);
+		consoletext(64*2-32,(char*)writebuf,0);
+	}
+	else{
+		sprintf((char*)writebuf,"WriteAPUNESACK:ERROR:%x",(unsigned int)MyIPC->fiforeply);
+		consoletext(64*2-32,(char*)writebuf,0);
+	}
+	
+	while(1){}
+	*/
+	/*
+	//test case : SendMultipleWordByFifo
+	volatile char writebuf[256];
+	uint32 reply = SendMultipleWordByFifo((uint32)fifo_writeuint32_ack, (uint32)fifo_apunes_write, (uint32)0x4000, (uint32)0x8, (uint32)0);
+	sprintf((char*)writebuf,"SendMultipleWordByFifo:%x",(unsigned int)reply);
+	consoletext(64*2-32,(char*)writebuf,0);
+	while(1){}
+	*/
 	
 	while(1) { // main loop to do the emulation
 		

@@ -15,8 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-//fifo ipc driver: revision 1.1
-
+//fifo ipc driver: revision 1.2
 #ifndef nesds13d_commonipc
 #define nesds13d_commonipc
 
@@ -25,24 +24,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 #define fifo_requires_ack	(uint32)(0xffff1010)
 #define fifo_requires_ack_execok	(uint32)(0xe1e2e3e4)
+#define fifo_requires_ack_invalid	(uint32)(0xe1e4e5e7)
 
 #define fifo_writeuint32_ack	(uint32)(0xffff1011)
-//write value (not address) is ret value
-
 #define fifo_writeuint16_ack	(uint32)(0xffff1012)
-//write value (not address) is ret value
-
 #define fifo_writeuint8_ack	(uint32)(0xffff1013)
-//write value (not address) is ret value
 
 #define fifo_readuint32_ack	(uint32)(0xffff1014)
-
 #define fifo_readuint16_ack	(uint32)(0xffff1015)
-
 #define fifo_readuint8_ack	(uint32)(0xffff1016)
 
-//project specific
-#define fifo_apunes_write	(uint32)(0xffff1017)
+//FIFO Hardware -> FIFO Software: GetSoftFIFO / SetSoftFIFO	/ 
+#define FIFO_NDS_HW_SIZE (16*4)
+#define fifo_write_ext	(uint32)(0xffff1017)
+#define fifo_read_ext	(uint32)(0xffff1018)
+
+//Project Specific
+#define fifo_nesapuwrite_ext	(uint32)(0xffff1019)
 
 //---------------------------------------------------------------------------------
 typedef struct sMyIPC {
@@ -133,25 +131,13 @@ typedef struct sMyIPC {
 
 #define     irq_vector_addr (__irq_vector)
 
-//processor ipc read/writes flags
-/*
-#define ARM7_BUSYFLAGRD (u8)(0x08)
-#define ARM7_BUSYFLAGWR (u8)(0x0f)
-#define ARM9_BUSYFLAGRD (u8)(0x80)
-#define ARM9_BUSYFLAGWR (u8)(0xf0)
-*/
-
 //NESDS special
 #define FIFO_APU_PAUSE 0x1201
 #define FIFO_UNPAUSE 0x1202
 #define FIFO_APU_RESET 0x1204
 #define FIFO_SOUND_RESET 0x1206
-
 #define FIFO_APU_BUSY 1
 
-//FIFO SPECIAL
-#define FIFO_NDS_HW_SIZE (16*4)
-#define FIFO_SEND_BUFFER	//stream 64 bytes of data to other ARM Core, can be received through GetSoftFIFO 4 bytes a time, until it returns false (empty)
 #endif
 
 #ifdef __cplusplus
@@ -178,19 +164,6 @@ extern bool Writeuint32WordACK(uint32 data0, uint32 data1);
 extern bool SendMultipleWordACK(uint32 data0, uint32 data1, uint32 data2, uint32 data3);
 extern uint32 SendMultipleWordByFifo(uint32 data0, uint32 data1, uint32 data2, uint32 data3, uint32 data4);
 
-//project specific
-#ifdef ARM9
-extern bool WriteAPUNESACK(uint32 data0, uint32 data1);
-#endif
-
-/*
-extern void sendbyte_ipc(uint8 word);
-extern u8 recvbyte_ipc();
-extern u32 read_ext_cpu(u32 address,u8 read_mode);
-extern void write_ext_cpu(u32 address,u32 value,u8 write_mode);
-*/
-
-//gbaemu4ds clock opcodes
 extern u8 gba_get_yearbytertc();
 extern u8 gba_get_monthrtc();
 extern u8 gba_get_dayrtc();
@@ -199,10 +172,11 @@ extern u8 gba_get_hourrtc();
 extern u8 gba_get_minrtc();
 extern u8 gba_get_secrtc();
 
-//FIFO 
+//FIFO IPC 1.2
 extern void FIFO_DRAINWRITE();
 extern void FIFO_RELEASE();
 
+extern int GetSoftFIFOCount();
 extern bool SetSoftFIFO(u32 value);
 extern bool GetSoftFIFO(u32 * var);
 
@@ -210,14 +184,10 @@ extern volatile int FIFO_SOFT_PTR;
 extern volatile u32 FIFO_BUF_SOFT[FIFO_NDS_HW_SIZE/4];
 extern volatile u32 FIFO_IN_BUF[FIFO_NDS_HW_SIZE/4];
 
-
 extern void HandleFifoNotEmpty();
 extern void HandleFifoEmpty();
 
-extern int SendFIFOCommand(u32 * buf,int size);
-extern int RecvFIFOCommand(u32 * buf);
-
-//
+//Project Specific
 extern void apusetup();
 
 #ifdef __cplusplus

@@ -34,17 +34,18 @@ void reg4015interrupt(u32 msg, void *none)
 * description:		none
 ******************************/
 void writeAPU(u32 val,u32 addr) 
-{
-	if(IPC_APUW - IPC_APUR < 256 && addr != 0x4011 && 
+{	
+	if(((int)(IPC_APUW - IPC_APUR) < 256) && ((addr&0xffff) != 0x4011) && 
 			((addr > 0x8000 && (debuginfo[16] == 24 || debuginfo[16] == 26)) ||
 			(addr < 0x4018 || debuginfo[16] == 20))) {
 		
-		//IO Write direct
-		if(WriteAPUNESACK(addr, val) == true){
-			IPC_APUW++; //fifo IPC_APUW update arm9notify when readAPU @ ARM7 is done
+		//IO Write
+		if(SendMultipleWordACK(fifo_nesapuwrite_ext,(u32)(addr),(u32)(val),(u32)(IPC_APUW)) == true){
+			IPC_APUW++;
 		}
+		
 	}
-	if(addr == 0x4011) {
+	else if(addr == 0x4011) {
 		unsigned char *out = IPC_PCMDATA;
 		out[__scanline] = val | 0x80;
 		*(IPC_APUWRITE + (addr & 0xFF)) = 0x100 | val;
