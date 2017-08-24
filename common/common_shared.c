@@ -14,11 +14,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
+//fifo ipc driver: revision 1.2
 
-//Coto: these are my FIFO handling libs. Works fine with NIFI (trust me this is very tricky to do without falling into freezes).
-//Use it at your will, just make sure you read WELL the descriptions below.
+//Coto: these are my FIFO handling libs. Works fine with :
+	//-	WIFI/NIFI
+	//-	Emulator IO Read / Writes with proper interrupting the hardware FIFO
 
-//fifo ipc driver: revision 1.1
+//Besides that there is the Softfifo: GetSoftFIFOCount / SetSoftFIFO / GetSoftFIFO, which allows another context (Sender FIFO) to feed data (up to 64 bytes),
+//and then any process between the other core (Receiver FIFO), can absorb it. Currently NesDS requires this, because the NDS FIFO is async. 
+//If you don't constantly offer a synchronized mechanism to write IO from one core to the other, breaks sounds when channels play.
+//So the Softfifo is a async(NDS FIFO interrupts)->sync layer so emulator writes properly.
 
 #include <nds.h>
 #include "common_shared.h"
@@ -57,7 +62,7 @@ inline int GetSoftFIFOCount(){
 	return FIFO_SOFT_PTR;
 }
 
-//GetSoftFIFO: Stores up to FIFO_NDS_HW_SIZE. Exposed to usercode for fetching 64 bytes sent from other core, until it returns false (empty buffer).
+//GetSoftFIFO: Stores up to FIFO_NDS_HW_SIZE. Exposed to usercode for fetching up to 64 bytes (in 4 bytes each) sent from other core, until it returns false (empty buffer).
 
 //Example: 
 //u32 n = 0;
@@ -184,12 +189,12 @@ inline bool Writeuint32WordACK(uint32 data0, uint32 data1){			//data0 address / 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-inline uint32 SendMultipleWordByFifo(uint32 data0, uint32 data1, uint32 data2, uint32 data3, uint32 data4)	//channel / multiple words / err reporting
+inline uint32 SendMultipleWordByFifo(uint32 data0, uint32 data1, uint32 data2, uint32 data3, uint32 data4)
 {	
-	//invalidate cache here (arm9)
+	//Invalidate cache here (arm9)
 	#ifdef ARM9
 	drainwrite();
-	//Prevent Cache problems.
+	//Prevent Cache problems (arm9)
 	DC_FlushRange((uint32*)MyIPC, (int)sizeof(MyIPC));
 	DC_FlushRange((uint32*)ipc_region, (int)(8*1024));
 	#endif
@@ -218,7 +223,6 @@ inline void HandleFifoEmpty(){
 	
 }
 
-//FIFO HANDLER INIT
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
@@ -303,7 +307,7 @@ inline void HandleFifoNotEmpty(){
 				//send each chunk separately 
 				#ifdef ARM7
 				APUSoundWrite(cmd3&0xffff, cmd4&0xffff);
-				IPC_APUR = IPC_APUW = (int)cmd5;	//todo: send in fifo
+				IPC_APUR = IPC_APUW = (int)cmd5;
 				#endif
 				
 			}
@@ -318,7 +322,7 @@ inline void HandleFifoNotEmpty(){
 		//data0 address / data1 value *uint32)
 		*(uint8*)cmd2 = (uint8)cmd3;
 		
-		MyIPC->fiforeply = (uint32)*(uint8*)cmd2;	//works with cmd2 passed directly
+		MyIPC->fiforeply = (uint32)*(uint8*)cmd2;
 	}
 	
 	else if(cmd1 == fifo_writeuint16_ack){
@@ -326,7 +330,7 @@ inline void HandleFifoNotEmpty(){
 		//data0 address / data1 value *uint32)
 		*(uint16*)cmd2 = (uint16)cmd3;
 		
-		MyIPC->fiforeply = (uint32)*(uint16*)cmd2;	//works with cmd2 passed directly
+		MyIPC->fiforeply = (uint32)*(uint16*)cmd2;
 	}
 	
 	else if(cmd1 == fifo_writeuint32_ack){
@@ -334,22 +338,22 @@ inline void HandleFifoNotEmpty(){
 		//data0 address / data1 value *uint32)
 		*(uint32*)cmd2 = (uint32)cmd3;
 		
-		MyIPC->fiforeply = (uint32)*(uint32*)cmd2;	//works with cmd2 passed directly
+		MyIPC->fiforeply = (uint32)*(uint32*)cmd2;
 	}
 	
 	else if(cmd1 == fifo_readuint8_ack){
 		
-		MyIPC->fiforeply = (uint32)*(uint8*)cmd2;	//works with cmd2 passed directly
+		MyIPC->fiforeply = (uint32)*(uint8*)cmd2;
 	}
 	
 	else if(cmd1 == fifo_readuint16_ack){
 		
-		MyIPC->fiforeply = (uint32)*(uint16*)cmd2;	//works with cmd2 passed directly
+		MyIPC->fiforeply = (uint32)*(uint16*)cmd2;
 	}
 	
 	else if(cmd1 == fifo_readuint32_ack){
 		
-		MyIPC->fiforeply = (uint32)*(uint32*)cmd2;	//works with cmd2 passed directly
+		MyIPC->fiforeply = (uint32)*(uint32*)cmd2;
 	}
 	
 	else{
@@ -362,13 +366,10 @@ inline void HandleFifoNotEmpty(){
 	
 }
 
-
 //FIFO HANDLER END
 
 
-
-
-
+//Project Specific
 #ifdef ARM9
 void apusetup(){
 	MyIPC->IPC_ADDR = (u32*)ipc_region;
