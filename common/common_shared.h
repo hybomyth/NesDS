@@ -19,8 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #ifndef nesds13d_commonipc
 #define nesds13d_commonipc
 
-#include <nds.h>
+
 #include "wifi_shared.h"
+#include "dswnifi.h"
 
 #define fifo_requires_ack	(uint32)(0xffff1010)
 #define fifo_requires_ack_execok	(uint32)(0xe1e2e3e4)

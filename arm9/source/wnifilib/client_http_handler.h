@@ -1,8 +1,26 @@
-#ifndef client_http_handler_declare
-#define client_http_handler_declare
+/*
+Copyright (C) 2015-2017  Coto
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>
+*/
 
 
-#include <nds.h>
+#ifndef __client_http_handler_wnifilib_h__
+#define __client_http_handler_wnifilib_h__
+
+#include "dswnifi.h"
+
 #include <netinet/in.h>
 #include <netdb.h>
 
@@ -28,7 +46,7 @@ typedef struct {
     struct hostent myhost;
     
     bool wifi_enabled;
-    unsigned char http_buffer[4 * 1024];
+    uint8 http_buffer[4 * 1024];
     
 
 } client_http_handler;
@@ -40,22 +58,22 @@ typedef struct {
 extern "C"{
 #endif
 
-extern char* server_ip;
+extern s8* server_ip;
 
 //HTTP calls:
-extern void request_connection(char* str_url,int str_url_size);
+extern void request_connection(s8* str_url,int str_url_size);
 
 //generate a GET request to a desired DNS/IP address
-extern bool issue_get_response(char* str_url,int str_url_size);
+extern bool issue_get_response(s8* str_url,int str_url_size);
 
 //generate a POST request where str_params conforms the FORM HTTP 1.0 spec to send to url
-extern bool send_response(char * str_params);
+extern bool send_response(s8 * str_params);
 
 //coworker that deals with command execution from NDS side
 extern client_http_handler client_http_handler_context;
 
 //libnds
-extern void getHttp(char* url);
+extern void getHttp(s8* url);
 
 #ifdef __cplusplus
 }

@@ -20,7 +20,7 @@ SOURCES		:=	source/	\
 				data/	\
 				source/disk/source/	\
 				source/dswifi_arm9/	\
-				source/httpstuff/source/	\
+				source/wnifilib/	\
 				source/zip/   \
                 source/interrupts/source/	\
                 source/memory_handler/source	\
@@ -34,7 +34,7 @@ INCLUDES	:=	include/ \
 				source/disk/include/	\
                 source/dswifi_arm9/	\
 				source/	\
-				source/httpstuff/include/	\
+				source/wnifilib/	\
 				source/interrupts/include/	\
 				source/memory_handler/include/	\
 				../common/    \

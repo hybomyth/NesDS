@@ -1,6 +1,22 @@
+/*
+Copyright (C) 2015-2017  Coto
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>
+*/
+//DSWNIFI Library revision: 1.1
 #include "nifi.h"
 
-#include "dsregs.h"
 #include "common_shared.h"
 #include "wifi_arm9.h"
 #include "multi.h"
@@ -8,43 +24,28 @@
 #include "wifi_shared.h"
 #include "wifi_arm9.h"
 #include "utils.h"
-#include "ds_misc.h"
-#include "c_defs.h"
-#include "menu.h"
-#include "arm9main.h"
 
 #include "client_http_handler.h"
 #include "http_utils.h"
 
-#include <nds.h>
 #include "sys/socket.h"
 #include "netinet/in.h"
 #include <netdb.h>
 #include <ctype.h>
-#include <fat.h>
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
-#include <fat.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
-#include <nds/memory.h>
-#include <nds/ndstypes.h>
-#include <nds/memory.h>
-#include <nds/bios.h>
-#include <nds/system.h>
-#include <nds/arm9/math.h>
-#include <nds/arm9/video.h>
-#include <nds/arm9/videoGL.h>
-#include <nds/arm9/trig_lut.h>
-#include <nds/arm9/sassert.h>
-
 #include "interrupts.h"
-#include "touch_ipc.h"
+#include "ds_misc.h"
+#include "c_defs.h"
+#include "menu.h"
+#include "arm9main.h"
 #include "common_shared.h"
 
 
@@ -52,27 +53,31 @@
 #include "sgIP.h"
 #endif
 
+//nifi_stat: 0 not ready, 1 act as a host and waiting, 2 act as a guest and waiting, 3 connecting, 4 connected, 5 host ready, 6 guest ready
+//
+int nifi_stat = 0;	//start as idle always
+int nifi_cmd = 0;
+int nifi_keys = 0;		//holds the keys for players. player1 included
+int nifi_keys_sync;	//(guestnifikeys & hostnifikeys)
+
 //frames
 //
 //Read-Only
-volatile	const u8 nifitoken[32]		= {0xB2, 0xD1, 'n', 'i', 'f', 'i', 'd', 's'};
-volatile 	const u8 nificonnect[32]	= {0xB2, 0xD1, 'c', 'o', 'n', 'n', 'e', 'c', 't'};
+volatile	const uint8 nifitoken[32]		= {0xB2, 0xD1, 'n', 'i', 'f', 'i', 'd', 's'};
+volatile 	const uint8 nificonnect[32]	= {0xB2, 0xD1, 'c', 'o', 'n', 'n', 'e', 'c', 't'};
 
 //Read-Write
-volatile 	u8 nificrc[32]				= {0xB2, 0xD1, (u8)CRC_CRC_STAGE, 0, 0, 0};
-volatile 	u8 data[4096];			//receiver frame, data + frameheader is recv TX'd frame nfdata[128]. Used by NIFI Mode
-volatile 	u8 nfdata[128]			= {0xB2, 0xD1, (u8)CRC_OK_SAYS_HOST, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};	//sender frame, recv as data[4096], see above. all valid frames have CRC_OK_SAYS_HOST sent.
-
-//DSWIFI UDP Data buffer
-volatile 	u8 data_udp[256];			//receiver frame, data + frameheader is recv TX'd frame nfdata[128]. Used by WIFI NIFI UDP Mode
+volatile 	uint8 nificrc[32]				= {0xB2, 0xD1, (uint8)CRC_CRC_STAGE, 0, 0, 0};
+volatile 	uint8 data[4096];			//receiver frame, data + frameheader is recv TX'd frame nfdata[128]. Used by NIFI Mode
+volatile 	uint8 nfdata[128]			= {0xB2, 0xD1, (uint8)CRC_OK_SAYS_HOST, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};	//sender frame, recv as data[4096], see above. all valid frames have CRC_OK_SAYS_HOST sent.
 
 
 // datalen = size of packet from beginning of 802.11 header to end, but not including CRC.
-int Wifi_RawTxFrame_NIFI(u16 datalen, u16 rate, u16 * data) {
+int Wifi_RawTxFrame_NIFI(uint16 datalen, uint16 rate, uint16 * data) {
 	int base,framelen, hdrlen, writelen;
 	int copytotal, copyexpect;
 	
-	u16 framehdr[arm9_header_framesize + 2];	//+2 for arm7 header section
+	uint16 framehdr[arm9_header_framesize + 2];	//+2 for arm7 header section
 	framelen=datalen + 8 + (WifiData->wepmode7 ? 4 : 0);
 
 	if(framelen + 40>Wifi_TxBufferWordsAvailable()*2) { // error, can't send this much!
@@ -90,7 +95,7 @@ int Wifi_RawTxFrame_NIFI(u16 datalen, u16 rate, u16 * data) {
 	framehdr[7]=0;
 
 	// MACs.
-	memset((u8*)(framehdr + 8), 0xFF, 18);
+	memset((uint8*)(framehdr + 8), 0xFF, 18);
 
 	if(WifiData->wepmode7)
 	{
@@ -154,7 +159,7 @@ int Wifi_RawTxFrame_NIFI(u16 datalen, u16 rate, u16 * data) {
 //coto: wifi udp netplay code (:
 // datalen = size of packet from beginning of 802.11 header to end, but not including CRC.
 
-int Wifi_RawTxFrame_WIFI(u8 datalen, u8 * data) {	
+int Wifi_RawTxFrame_WIFI(uint8 datalen, uint8 * data) {	
 	
 	//sender phase
 	{
@@ -164,15 +169,15 @@ int Wifi_RawTxFrame_WIFI(u8 datalen, u8 * data) {
 			//#1 DS is not connected, wait until server acknowledges this info
 			case(ds_searching_for_multi_servernotaware):{		
 				//NDS MAC Address
-				//volatile u8 macbuf[6];
-				//Wifi_GetData(WIFIGETDATA_MACADDRESS, sizeof(macbuf), (u8*)macbuf);
+				//volatile uint8 macbuf[6];
+				//Wifi_GetData(WIFIGETDATA_MACADDRESS, sizeof(macbuf), (uint8*)macbuf);
 				
 				volatile unsigned long available_ds;
-				ioctl(client_http_handler_context.socket_id__multi_notconnected, FIONREAD, (u8*)&available_ds);
+				ioctl(client_http_handler_context.socket_id__multi_notconnected, FIONREAD, (uint8*)&available_ds);
 				
 				if(available_ds == 0){
 					char outgoingbuf[256];
-					sprintf(outgoingbuf,"dsnotaware-NIFINintendoDS-%s-",(char*)print_ip((u32)Wifi_GetIP()));	//DS udp ports on server inherit the logic from "//Server aware" handler
+					sprintf(outgoingbuf,"dsnotaware-NIFINintendoDS-%s-",(char*)print_ip((uint32)Wifi_GetIP()));	//DS udp ports on server inherit the logic from "//Server aware" handler
 					sendto(client_http_handler_context.socket_id__multi_notconnected,outgoingbuf,strlen(outgoingbuf),0,(struct sockaddr *)&client_http_handler_context.server_addr,sizeof(client_http_handler_context.server_addr));
 				}
 			}
@@ -183,7 +188,7 @@ int Wifi_RawTxFrame_WIFI(u8 datalen, u8 * data) {
 			case(ds_netplay_host_servercheck):case(ds_netplay_guest_servercheck):{
 				
 				volatile unsigned long available_ds;
-				ioctl(client_http_handler_context.socket_id__multi_notconnected, FIONREAD, (u8*)&available_ds);
+				ioctl(client_http_handler_context.socket_id__multi_notconnected, FIONREAD, (uint8*)&available_ds);
 				
 				if(available_ds == 0){
 					//check pending receive
@@ -202,7 +207,7 @@ int Wifi_RawTxFrame_WIFI(u8 datalen, u8 * data) {
 					}
 					
 					char buf2[64];
-					sprintf(buf2,"dsaware-%s-bindOK-%d-%s-",status,LISTENER_PORT,(char*)print_ip((u32)Wifi_GetIP()));
+					sprintf(buf2,"dsaware-%s-bindOK-%d-%s-",status,LISTENER_PORT,(char*)print_ip((uint32)Wifi_GetIP()));
 					//consoletext(64*2-32,(char *)&buf2[0],0);
 					sendto(client_http_handler_context.socket_id__multi_notconnected,buf2,sizeof(buf2),0,(struct sockaddr *)&client_http_handler_context.server_addr,sizeof(client_http_handler_context.server_addr));
 					
@@ -216,7 +221,7 @@ int Wifi_RawTxFrame_WIFI(u8 datalen, u8 * data) {
 				//send NIFI Frame here
 				//int i=1;
 				//i=ioctl(client_http_handler_context.socket_multi_sender,FIONBIO,&i); // set non-blocking port
-				//data[0] = (u8)(rand()&0xff);
+				//data[0] = (uint8)(rand()&0xff);
 				sendto(client_http_handler_context.socket_multi_sender,data,datalen,0,(struct sockaddr *)&client_http_handler_context.sain_sender,sizeof(client_http_handler_context.sain_sender));
 			}
 			break;
@@ -229,7 +234,7 @@ int Wifi_RawTxFrame_WIFI(u8 datalen, u8 * data) {
 //coto: just for nifi mode (not wifi)
 //true 	== 	nifi frame
 //false ==	other frame
-inline bool NiFiHandler(int packetID, int readlength, u8 * data){
+inline bool NiFiHandler(int packetID, int readlength, uint8 * data){
 	
 	bool valid_nifi_frame = false;
 	
@@ -262,7 +267,7 @@ inline bool NiFiHandler(int packetID, int readlength, u8 * data){
 						valid_nifi_frame = true;
 						nifi_stat = 5;
 						nifi_cmd |= MP_CONN;
-						sendcmd((u8*)&nfdata[0]);
+						sendcmd((uint8*)&nfdata[0]);
 						hideconsole();
 						NES_reset();
 						nifi_keys = 0;
@@ -277,7 +282,7 @@ inline bool NiFiHandler(int packetID, int readlength, u8 * data){
 					else {		//bad crc. disconnect the comm.
 						nifi_stat = 0;
 						nifi_cmd &= ~MP_CONN;
-						sendcmd((u8*)&nfdata[0]);
+						sendcmd((uint8*)&nfdata[0]);
 					}
 				}
 				break;
@@ -324,14 +329,14 @@ inline bool NiFiHandler(int packetID, int readlength, u8 * data){
 		
 		//coto:
 		//read crc from nifi frame so we dont end up with corrupted data.(read from caller buffer, aligned)
-		volatile u16 crc16_recv_frame = (u16)*(u16*)(data + frame_header_size + framesize);
+		volatile uint16 crc16_recv_frame = (uint16)*(uint16*)(data + frame_header_size + framesize);
 		
 		//(read from handler buffer directly, unaligned)
-		//(u16)(*(u8*)(data + frame_header_size + framesize) | (*(u8*)(data + frame_header_size + framesize + 1)<<8));
+		//(uint16)(*(uint8*)(data + frame_header_size + framesize) | (*(uint8*)(data + frame_header_size + framesize + 1)<<8));
 		
 		//generate crc per nifi frame so we dont end up with corrupted data.
-		volatile u16 crc16_frame_gen = swiCRC16	(	0xffff, //uint16 	crc,
-			(u8*)(data + frame_header_size),
+		volatile uint16 crc16_frame_gen = swiCRC16	(	0xffff, //uint16 	crc,
+			(uint8*)(data + frame_header_size),
 			(framesize)		//cant have this own crc here
 			);
 		
@@ -365,7 +370,7 @@ inline void Handler(int packetID, int readlength)
 	switch(MyIPC->dswifiSrv.dsnwifisrv_mode){
 		case (dswifi_nifimode):{
 			Wifi_RxRawReadPacket(packetID, readlength, (unsigned short *)data);
-			NiFiHandler(packetID, readlength, (u8*)(&data[0]));	
+			NiFiHandler(packetID, readlength, (uint8*)(&data[0]));	
 		}
 		break;
 		
@@ -382,59 +387,25 @@ inline void Handler(int packetID, int readlength)
 }
 
 
-//0 idle, 1 nifi, 2 dswnifi
-void switch_dswnifi_mode(u8 mode){
+void Timer_10ms(void) {
+	Wifi_Timer(10);
+}
 
-	//wifi minimal setup
-	if(mode == (u8)dswifi_wifimode){
-		MyIPC->dswifiSrv.dsnwifisrv_mode = dswifi_wifimode;
-		MyIPC->dswifiSrv.dsnwifisrv_stat = ds_searching_for_multi_servernotaware;
-		MyIPC->dswifiSrv.dswifi_setup = false;	//set for RPC services
+void initNiFi()
+{
+	Wifi_InitDefault(false);
+	Wifi_SetPromiscuousMode(1);
+	Wifi_RawSetPacketHandler(Handler);
+	Wifi_SetChannel(10);
+
+	if(1) {
+		//for secial configuration for wifi
+		irqDisable(IRQ_TIMER3);
+		//ori:irqSet(IRQ_TIMER3, Timer_10ms); // replace timer IRQ
+		irqSet(IRQ_TIMER3, Timer_50ms); // replace timer IRQ
+		//ori: TIMER3_DATA = -(6553 / 5); // 6553.1 * 256 / 5 cycles = ~10ms;
+		TIMER3_DATA = -6553; // 6553.1 * 256 cycles = ~50ms;
+		TIMER3_CR = 0x00C2; // enable, irq, 1/256 clock
+		irqEnable(IRQ_TIMER3);
 	}
-	//nifi minimal setup
-	else if (mode == (u8)dswifi_nifimode){
-		//nifi
-		MyIPC->dswifiSrv.dsnwifisrv_mode = dswifi_nifimode;
-		MyIPC->dswifiSrv.dswifi_setup = false;
-	}
-	
-	//idle mode minimal setup
-	else if (mode == (u8)dswifi_idlemode){
-		//nifi
-		MyIPC->dswifiSrv.dsnwifisrv_mode = dswifi_idlemode;
-		MyIPC->dswifiSrv.dswifi_setup = false;
-	}
-	
-	
-	//set NIFI mode
-	if( (MyIPC->dswifiSrv.dsnwifisrv_mode == dswifi_nifimode) && (MyIPC->dswifiSrv.dswifi_setup == false)){
-		initNiFi();
-		MyIPC->dswifiSrv.dswifi_setup = true;
-	}
-	
-	//set tcp dswifi
-	else if((MyIPC->dswifiSrv.dsnwifisrv_mode == dswifi_wifimode) && (MyIPC->dswifiSrv.dswifi_setup == false)){
-		if(Wifi_InitDefault(WFC_CONNECT) == true)
-		{
-			//iprintf("Failed to connect!");
-			
-			//char buf[64];
-			//sprintf(buf,"connected: IP: %s",(char*)print_ip((u32)Wifi_GetIP()));
-			//consoletext(64*2-32,(char *)&buf[0],0);
-			
-			//works fine both
-			//new connection
-			request_connection(server_ip,strlen(server_ip));
-			
-			//this must be called on send tx frame
-			//send_response((char *)"<html><body><form action='http://192.168.43.108/'>First name:<br><input type='text' name='firstname' value='Mickey'><br>Last name:<br><input type='text' name='lastname' value='Mouse'><br><br><input type='submit' value='Submit'></form> </body></html>");
-			//send_response((char *)"GET /dswifi/example1.php HTTP/1.1\r\n""Host: www.akkit.org\r\n""User-Agent: Nintendo DS\r\n\r\n");
-			MyIPC->dswifiSrv.dswifi_setup = true;
-		}
-		else{
-			consoletext(64*2-32,"     phailed conn! ________________________________",0);
-		//iprintf("Connected\n\n");
-		}
-	}
-	
 }
