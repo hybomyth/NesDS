@@ -22,7 +22,7 @@ extern void readAPU();
 extern void resetAPU(void);
 extern void dealrawpcm(unsigned char *out);
 
-
+extern void lidinterrupt(void);
 #ifdef __cplusplus
 }
 #endif

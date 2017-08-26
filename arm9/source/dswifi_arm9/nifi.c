@@ -51,8 +51,6 @@
 #ifdef WIFI_USE_TCP_SGIP
 #include "sgIP.h"
 #endif
-//DSWIFI buf
-volatile u8 wifi_block[512 * 1024];
 
 //frames
 //
@@ -70,7 +68,10 @@ volatile 	u8 data_udp[256];			//receiver frame, data + frameheader is recv TX'd 
 
 
 // datalen = size of packet from beginning of 802.11 header to end, but not including CRC.
-inline int Wifi_RawTxFrame_NIFI(u16 datalen, u16 rate, u16 * data) {
+#ifdef ARM9
+__attribute__((section(".dtcm")))
+#endif
+int Wifi_RawTxFrame_NIFI(u16 datalen, u16 rate, u16 * data) {
 	int base,framelen, hdrlen, writelen;
 	int copytotal, copyexpect;
 	
@@ -147,13 +148,19 @@ inline int Wifi_RawTxFrame_NIFI(u16 datalen, u16 rate, u16 * data) {
 	{
 		SGIP_DEBUG_MESSAGE(("Tx exp:%i que:%i",copyexpect,copytotal));
 	}
-	if(synchandler) synchandler();
+	if(synchandler) {
+		synchandler();
+	}
 	return 0;
 }
 
 //coto: wifi udp netplay code (:
 // datalen = size of packet from beginning of 802.11 header to end, but not including CRC.
-inline int Wifi_RawTxFrame_WIFI(u8 datalen, u8 * data) {	
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+int Wifi_RawTxFrame_WIFI(u8 datalen, u8 * data) {	
 	
 	//sender phase
 	{

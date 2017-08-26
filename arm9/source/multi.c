@@ -274,8 +274,6 @@ void initNiFi()
 		irqDisable(IRQ_TIMER3);
 		//ori:irqSet(IRQ_TIMER3, Timer_10ms); // replace timer IRQ
 		irqSet(IRQ_TIMER3, Timer_50ms); // replace timer IRQ
-		// re-set timer3
-		TIMER3_CR = 0;
 		//ori: TIMER3_DATA = -(6553 / 5); // 6553.1 * 256 / 5 cycles = ~10ms;
 		TIMER3_DATA = -6553; // 6553.1 * 256 cycles = ~50ms;
 		TIMER3_CR = 0x00C2; // enable, irq, 1/256 clock

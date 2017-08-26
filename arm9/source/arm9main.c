@@ -407,6 +407,13 @@ int main(int _argc, char **_argv) {
 				nifi_keys =  nifi_keys_sync;
 				play();
 			}
+			//just for debugging WIFI activity, leave uncommented for wifi gameplay
+			/*
+			else{
+				nifi_stat = 0;
+				switch_dswnifi_mode((u8)dswifi_idlemode);
+			}
+			//debug stability when connected in WIFI mode
 			uint8 val = rand()&0xf;
 			volatile char buf[128];
 			if(dswnifi_frame == true){
@@ -417,11 +424,9 @@ int main(int _argc, char **_argv) {
 				sprintf((char*)buf,"framephail:%d! ________________________________",val);
 				consoletext(64*2-32,(char*)buf,0);
 				
-				//nifi_stat = 0;
-				//switch_dswnifi_mode((u8)dswifi_idlemode);
-				
 				
 			}
+			*/
 		}
 		
 		swiWaitForVBlank();

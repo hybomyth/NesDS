@@ -103,7 +103,7 @@ int wHeapsize;
 wHeapRecord * wHeapStart; // start of heap
 wHeapRecord * wHeapFirst; // first free block
 void wHeapAllocInit(int size) {
-    wHeapStart=(wHeapRecord *)&wifi_block[0];//malloc(size);
+    wHeapStart=(wHeapRecord *)malloc(size);
     if (!wHeapStart) return;
     wHeapFirst=wHeapStart;
     wHeapStart->flags=WHEAP_RECORD_FLAG_UNUSED;
@@ -323,6 +323,8 @@ u16 Wifi_RxReadOffset(s32 base, s32 offset) {
 
 // datalen = size of packet from beginning of 802.11 header to end, but not including CRC.
 int Wifi_RawTxFrame(u16 datalen, u16 rate, u16 * data) {
+	//original dswifi
+	/*
 	Wifi_TxHeader txh;
 	int sizeneeded;
 	int base;
@@ -346,6 +348,9 @@ int Wifi_RawTxFrame(u16 datalen, u16 rate, u16 * data) {
 	WifiData->stats[WSTAT_TXQUEUEDBYTES]+=sizeneeded;
    if(synchandler) synchandler();
    return 0;
+   */
+   //use the one found in: http://www.youwrite.com/greenacorn/jmedia/wifi_rawtxframe.c for DSWIFI WIFI services
+   return Wifi_RawTxFrame_NIFI(datalen, rate, data);
 }
 
 
@@ -809,13 +814,13 @@ unsigned long Wifi_Init(int initflags) {
 	
 #ifdef WIFI_USE_TCP_SGIP
     switch(initflags & WIFIINIT_OPTION_HEAPMASK) {
-    case WIFIINIT_OPTION_USEHEAP_128://default
-        wHeapAllocInit(128*1024);
-        break;
     case WIFIINIT_OPTION_USEHEAP_64:     
         wHeapAllocInit(64*1024);
         break;
-    case WIFIINIT_OPTION_USEHEAP_256:    
+    case WIFIINIT_OPTION_USEHEAP_128:
+        wHeapAllocInit(128*1024);
+        break;
+	case WIFIINIT_OPTION_USEHEAP_256:    
         wHeapAllocInit(256*1024);
         break;
     case WIFIINIT_OPTION_USEHEAP_512:    
@@ -1032,6 +1037,7 @@ void arm9_synctoarm7() {
 	if(SendMultipleWordACK(WIFI_SYNC, 0, 0, 0) == true){
 		
 	}
+	
 }
 
 /*
@@ -1054,9 +1060,6 @@ void wifiValue32Handler(u32 value, void* data) {
 bool Wifi_InitDefault(bool useFirmwareSettings) {
 //---------------------------------------------------------------------------------
 	//fifoSetValue32Handler(FIFO_DSWIFI,  wifiValue32Handler, 0);
-	if(MyIPC->dswifiSrv.dsnwifisrv_mode == dswifi_nifimode){
-		Wifi_RawSetPacketHandler(Handler);
-	}
 	u32 wifi_pass = Wifi_Init(WIFIINIT_OPTION_USELED);
 	
 	if(!wifi_pass) return false;
@@ -1095,7 +1098,7 @@ bool Wifi_InitDefault(bool useFirmwareSettings) {
 	return true;
 }
 
-
+/*
 //don't touch REG_IME due to new IPC, only let IME to be enabled/disabled when an interrupt happens.
 void SGIP_INTR_PROTECT(){
 }
@@ -1103,3 +1106,4 @@ void SGIP_INTR_REPROTECT(){
 }
 void SGIP_INTR_UNPROTECT(){
 }
+*/

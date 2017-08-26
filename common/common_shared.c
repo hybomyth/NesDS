@@ -38,6 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #include "handler.h"
 #include "c_defs.h"
 #include "ds_misc.h"
+#include "s_apu.h"
 
 #endif
 
@@ -45,6 +46,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 #include "c_defs.h"
 #include "ds_misc.h"
+#include "utils.h"
+#include "wifi_arm9.h"
 
 #endif
 //Software FIFO calls, Rely on Hardware FIFO calls so it doesnt matter if they are in different maps 
@@ -58,7 +61,7 @@ __attribute__((section(".dtcm")))
 volatile u32 FIFO_BUF_SOFT[FIFO_NDS_HW_SIZE/4];
 
 //useful for checking if something is pending
-inline int GetSoftFIFOCount(){
+int GetSoftFIFOCount(){
 	return FIFO_SOFT_PTR;
 }
 
@@ -194,21 +197,21 @@ inline uint32 SendMultipleWordByFifo(uint32 data0, uint32 data1, uint32 data2, u
 	//Invalidate cache here (arm9)
 	#ifdef ARM9
 	drainwrite();
+	#endif
+	FIFO_DRAINWRITE();
+	#ifdef ARM9
 	//Prevent Cache problems (arm9)
 	DC_FlushRange((uint32*)MyIPC, (int)sizeof(MyIPC));
 	DC_FlushRange((uint32*)ipc_region, (int)(8*1024));
 	#endif
 	
 	MyIPC->fiforeply = fifo_requires_ack_invalid;
-	FIFO_DRAINWRITE();
-	
 	REG_IPC_FIFO_TX =	(uint32)data0; 	//raise irq here
 	REG_IPC_FIFO_TX = 	(uint32)data1;
 	REG_IPC_FIFO_TX = 	(uint32)data2;
 	REG_IPC_FIFO_TX = 	(uint32)data3;
 	REG_IPC_FIFO_TX = 	(uint32)data4;
 	
-	FIFO_DRAINWRITE();
 	u32 reply = MyIPC->fiforeply;
 	return reply;
 }
@@ -227,6 +230,7 @@ inline void HandleFifoEmpty(){
 __attribute__((section(".itcm")))
 #endif
 inline void HandleFifoNotEmpty(){
+	FIFO_RELEASE();
 	uint32 cmd1 = 0,cmd2 = 0,cmd3 = 0,cmd4 = 0,cmd5 = 0;
 	
 	if(!(REG_IPC_FIFO_CR & IPC_FIFO_RECV_EMPTY)){

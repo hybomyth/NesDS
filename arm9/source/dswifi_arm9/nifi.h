@@ -44,7 +44,6 @@ extern void Handler(int packetID, int readlength);
 
 //WIFI specific
 extern int Wifi_RawTxFrame_WIFI(u8 datalen, u8 * data);
-extern volatile u8 wifi_block[512 * 1024];
 extern volatile u8 data_udp[256];
 
 extern void switch_dswnifi_mode(u8 mode);

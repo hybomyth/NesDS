@@ -233,7 +233,7 @@ extern "C" {
 #ifdef __cplusplus
 };
 #endif
-/*
+
 #define SGIP_INTR_PROTECT() \
 	int tIME; \
 	tIME=enterCriticalSection()
@@ -241,7 +241,7 @@ extern "C" {
 	tIME=enterCriticalSection()
 #define SGIP_INTR_UNPROTECT() \
 	leaveCriticalSection(tIME)
-*/
+
 #define SGIP_WAITEVENT() \
    sgIP_IntrWaitEvent()
 #else // !SGIP_INTERRUPT_THREADING_MODEL
