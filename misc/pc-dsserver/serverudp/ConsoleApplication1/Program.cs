@@ -285,7 +285,9 @@ namespace ConsoleApplication1
 
                                 //DS1
                                 sendaware_req("srvaware", nds_session_list[nds1_index].ip, ip_dest_ds1, ds1_mode);
-                                
+
+                                Thread.Sleep(3000);  //3s
+
                                 //DS2
                                 sendaware_req("srvaware", nds_session_list[nds2_index].ip, ip_dest_ds2, ds2_mode);   
                                 Console.WriteLine("DS's are binded correctly :)");

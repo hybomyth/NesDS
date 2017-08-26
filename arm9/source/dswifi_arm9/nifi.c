@@ -68,9 +68,6 @@ volatile 	u8 data_udp[256];			//receiver frame, data + frameheader is recv TX'd 
 
 
 // datalen = size of packet from beginning of 802.11 header to end, but not including CRC.
-#ifdef ARM9
-__attribute__((section(".dtcm")))
-#endif
 int Wifi_RawTxFrame_NIFI(u16 datalen, u16 rate, u16 * data) {
 	int base,framelen, hdrlen, writelen;
 	int copytotal, copyexpect;
@@ -157,9 +154,6 @@ int Wifi_RawTxFrame_NIFI(u16 datalen, u16 rate, u16 * data) {
 //coto: wifi udp netplay code (:
 // datalen = size of packet from beginning of 802.11 header to end, but not including CRC.
 
-#ifdef ARM9
-__attribute__((section(".itcm")))
-#endif
 int Wifi_RawTxFrame_WIFI(u8 datalen, u8 * data) {	
 	
 	//sender phase

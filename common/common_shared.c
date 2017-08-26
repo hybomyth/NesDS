@@ -230,7 +230,12 @@ inline void HandleFifoEmpty(){
 __attribute__((section(".itcm")))
 #endif
 inline void HandleFifoNotEmpty(){
-	FIFO_RELEASE();
+
+	//give priority to receive FIFO in WIFI mode, discard sender FIFO (prevents wifi mode crashes)
+	if(MyIPC->dswifiSrv.dsnwifisrv_mode == dswifi_wifimode){
+		FIFO_RELEASE();
+	}
+	
 	uint32 cmd1 = 0,cmd2 = 0,cmd3 = 0,cmd4 = 0,cmd5 = 0;
 	
 	if(!(REG_IPC_FIFO_CR & IPC_FIFO_RECV_EMPTY)){
