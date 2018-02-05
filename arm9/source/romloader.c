@@ -59,7 +59,7 @@ int getinput(void);
 
 int init_rommenu(void);
 void listrom(int line,int rom,int highlight); //print rom title
-int loadrom(int rom);	//return -1 on success, or rom count (from directory change)
+//int loadrom(int rom);	//return -1 on success, or rom count (from directory change)
 void stringsort(char**);
 
 void adjust_fds(char *name, char * rom)
@@ -103,7 +103,7 @@ void do_rommenu() {
 	//fifoSendValue32(FIFO_USER_08, FIFO_APU_PAUSE);			//disable sound when selecting a rom.
 	//SendArm7Command(FIFO_APU_PAUSE,0x0,0x0,0x0);
 	SendMultipleWordACK(FIFO_APU_PAUSE,0x0,0x0,0x0);
-	
+	/*
 	if(!global_roms) {
 		roms=init_rommenu();
 		global_roms = roms;
@@ -117,6 +117,8 @@ void do_rommenu() {
 		
 		while(1) IRQVBlankWait();
 	}
+	*/
+	
 	showconsole();
 	clearconsole();
 	showversion();
@@ -155,7 +157,7 @@ void rommenu(int roms) {
 			case KEY_B:
 			case KEY_A:
 			case KEY_Y:
-				loaded=loadrom(sel);
+				//loaded=loadrom(sel);
 				if(loaded > 0) {	//didn't load (it was a directory) loaded == 0 means that ips file is loaded.
 					sel=0;
 					roms=loaded;
@@ -274,21 +276,23 @@ void listrom(int line,int rom,int highlight) {
 * argument:		rom: rom number of the roms list.
 * description:		called by rommenu.
 ******************************/
-int loadrom(int rom) {
+int loadrom(char * romfilename) {
 	int i;
 	char **files=(char**)rom_files; 
 	FILE *f;
-
+	
+	/*
 	if(*files[rom]==1) {	//directory
 		chdir(files[rom]+1);
 		return init_rommenu();
 	} else {	//file
+	*/
+		/*
 		if(strstr(files[rom]+1, ".ips") || strstr(files[rom]+1, ".IPS")) {	// a ips file is loaded.
 			load_ips(files[rom]+1);
 			return 0;
 		}
 		else {
-			char *roms;
 			memcpy(romfilename,files[rom]+1,256);
 
 			if(strstr(files[rom]+1, ".GZ") || strstr(files[rom]+1, ".gz") ||
@@ -300,21 +304,24 @@ int loadrom(int rom) {
 				f=fopen(tmpname,"r");
 			}
 			else {
+			*/
 				f=fopen(romfilename,"r");
-			}
+			//}
 
 			romfileext=strrchr(romfilename,'.')+1;
-			roms = (char *)rom_start;
+			char *roms = (char *)rom_start;
 			//f=fopen(romfilename,"r");
 			i=fread(roms,1,ROM_MAX_SIZE,f);	//read the whole thing (filesize=some huge number, don't care)
 			do_ips(i);
 
 			fclose(f);
+			/*
 			if(strstr(files[rom]+1, ".GZ") || strstr(files[rom]+1, ".gz") ||
 				strstr(files[rom]+1, ".ZIP") || strstr(files[rom]+1, ".zip")
 				) {    // a gz file is loaded.
 				unlink(tmpname);
 			}
+			*/
 			romsize=i;
             if(i < 0x100000)
                 i = 0x100000;            //leave some room for FDS files. Also the NSF file need some extra memory
@@ -328,8 +335,8 @@ int loadrom(int rom) {
 			initcart(roms);
 			IPC_MAPPER = debuginfo[16];
 			return -1;	//(-1 on success)
-		}
-	}
+		//}
+	//}
 }
 
 /*****************************

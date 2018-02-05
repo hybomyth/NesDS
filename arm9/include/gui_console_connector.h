@@ -115,6 +115,9 @@ extern bool InitProjectSpecificConsole();
 //2) Uses subEngine: VRAM Layout -> Console Setup
 extern vramSetup * SNEMULDS_2DVRAM_SETUP();
 
+extern char romFile[512];
+extern char romFullPath[512];
+
 #ifdef __cplusplus
 }
 #endif

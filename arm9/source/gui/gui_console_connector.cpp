@@ -222,6 +222,59 @@ bool InitProjectSpecificConsole(){
 	return true;
 }
 
+char romFile[512];
+char romFullPath[512];
+
+//read rom from (path)touchscreen:output rom -> CFG.ROMFile
+void GUI_getROM(sint8 *rompath){
+    GUI.ScanJoypad = 1;
+	consoleClear(DefaultSessionConsole);
+
+	// Get ROMs list
+	int		cnt;
+    sint8 **dir_list = FS_getDirectoryList(rompath, "NES|ZIP|GZ", &cnt);
+	
+	// Alphabetical sort
+	if (1){
+		qsort(dir_list, cnt, sizeof(sint8 *), sort_strcmp);
+	}
+
+	// Create ROM selector
+	t_GUIScreen *scr = GUI_newSelector(cnt, dir_list, IDS_SELECT_ROM, &trebuchet_9_font);
+    scr->zones[4].handler = NULL; // Remove CANCEL button
+	scr->handler = FirstROMSelectorHandler;
+	
+	GUI_drawScreen(scr, NULL);
+	
+	GUI_start();
+	
+	sint8 *sel = GUISelector_getSelected(scr, NULL);
+
+    GUI.ScanJoypad = 0;
+	sprintf(romFile,"%s",sel);	//CFG.ROMFile <- selected file from touchscreen: file.ext
+}
+
+void GUI_deleteROMSelector(){
+	GUI_deleteSelector(GUI.screen); // Should also delete dir_list
+	consoleClear(DefaultSessionConsole);
+}
+
+int FirstROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
+	switch (msg)
+	{
+	case GUI_DRAW:
+		consoleClear(DefaultSessionConsole);
+		break;
+	case GUI_COMMAND:
+		if (param == 3)
+		{
+			GUI.exit = 1;
+			return 1;
+		}
+	}
+	return 0;
+}
+
 /*
 t_GUIScreen *buildGFXConfigMenu()
 {
@@ -1083,57 +1136,6 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	return 0;
 }
 
-
-int FirstROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
-	switch (msg)
-	{
-	case GUI_DRAW:
-		consoleClear(DefaultSessionConsole);
-		break;
-	case GUI_COMMAND:
-		if (param == 3)
-		{
-			GUI.exit = 1;
-			return 1;
-		}
-	}
-	return 0;
-}
-
-
-//read rom from (path)touchscreen:output rom -> CFG.ROMFile
-void GUI_getROM(sint8 *rompath){
-    GUI.ScanJoypad = 1;
-	consoleClear(DefaultSessionConsole);
-
-	// Get ROMs list
-	int		cnt;
-    sint8 **dir_list = FS_getDirectoryList(rompath, "SMC|SFC|SWC|FIG|ZIP|GZ", &cnt);
-	
-	// Alphabetical sort
-	if (CFG.GUISort){
-		qsort(dir_list, cnt, sizeof(sint8 *), sort_strcmp);
-	}
-
-	// Create ROM selector
-	t_GUIScreen *scr = GUI_newSelector(cnt, dir_list, IDS_SELECT_ROM, &trebuchet_9_font);
-    scr->zones[4].handler = NULL; // Remove CANCEL button
-	scr->handler = FirstROMSelectorHandler;
-	
-	GUI_drawScreen(scr, NULL);
-	
-	GUI_start();
-	
-	sint8 *sel = GUISelector_getSelected(scr, NULL);
-
-    GUI.ScanJoypad = 0;
-	sprintf(CFG.ROMFile,"%s",sel);	//CFG.ROMFile <- selected file from touchscreen: file.ext
-}
-
-void GUI_deleteROMSelector(){
-	GUI_deleteSelector(GUI.screen); // Should also delete dir_list
-	consoleClear(DefaultSessionConsole);
-}
 
 void GUI_createMainMenu(){
 	consoleClear(DefaultSessionConsole);

@@ -19,6 +19,7 @@
 #include "interrupts.h"
 #include "touch_ipc.h"
 #include "specific_shared.h"
+#include "gui_console_connector.h"
 
 
 //frameskip min = 1, max = xxxxxx....
@@ -136,9 +137,9 @@ int nesds_framecount=0;	//global framecount emulator
 int main(int _argc, char **_argv) {
 	IRQInit();
 	
+	//add GUI!
 	bool project_specific_console = true;	//set default console or custom console: custom console
 	GUI_init(project_specific_console);
-	
 	sint32 fwlanguage = (sint32)getLanguage();
 	GUI_setLanguage(fwlanguage);
 	
@@ -163,6 +164,12 @@ int main(int _argc, char **_argv) {
 	
 	int sramcount=0;
 	
+	
+	GUI_getROM(getfatfsPath((char*)"nes"));	//returns: file.ext-> szFile	<- char * recv from arg: full dir path to look files by extension at
+	GUI_deleteROMSelector();
+	sprintf(romFullPath,"%s%s",getfatfsPath("nes/"),romFile);
+	
+	consoleinit(); //init subscreen to show chars.
 	DS_init(); //DS init.
 	EMU_Init(); //emulation init.
 	apusetup();
@@ -171,13 +178,13 @@ int main(int _argc, char **_argv) {
 	IPC_APUIRQ = 0;
 	IPC_REG4015 = 0;
 
-	consoleinit(); //init subscreen to show chars.
 	crcinit();	//init the crc table.
 
 	//pre-alocate memory....
 	//IPC_FILES = malloc(MAXFILES * 256 + MAXFILES * 4);
 	//IPC_ROM = malloc(ROM_MAX_SIZE);
 
+	/*
 #ifndef ROM_EMBEDED
 	if(!bootext()) {
 		//chdir("/");
@@ -186,6 +193,12 @@ int main(int _argc, char **_argv) {
 #else
 	do_romebd();
 #endif
+	*/
+	
+	loadrom(romFullPath);
+	
+	
+	
 	
 	//__emuflags |= PALSYNC;
 	
