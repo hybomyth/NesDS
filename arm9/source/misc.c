@@ -1,4 +1,7 @@
-#include <nds.h>
+#include "typedefsTGDS.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
 #include <stdio.h>
 #include <string.h>
 #include "ds_misc.h"
@@ -8,11 +11,10 @@
 #include "arm9main.h"
 #include "multi.h"
 
-#include <nds/arm9/cache.h>
-
 #include "interrupts.h"
 #include "touch_ipc.h"
-#include "common_shared.h"
+#include "specific_shared.h"
+#include "keypadTGDS.h"
 
 int save_slots = 0;
 int slots_num = 0;
@@ -40,9 +42,7 @@ void writeAPU(u32 val,u32 addr)
 			(addr < 0x4018 || debuginfo[16] == 20))) {
 		
 		//IO Write
-		if(SendMultipleWordACK(fifo_nesapuwrite_ext,(u32)(addr),(u32)(val),(u32)(IPC_APUW)) == true){
-			IPC_APUW++;
-		}
+		SendMultipleWordACK(fifo_nesapuwrite_ext,(u32)(addr),(u32)(val),NULL);
 		
 	}
 	else if(addr == 0x4011) {
@@ -78,11 +78,11 @@ int touchstate=1; 	// <2=pen up, 2=first touch, 3=pen down, 4=pen released
 void touch_update() {
 	int ts=touchstate;
 	
-	touchPosition touch;
-	//touchRead(&touch);
-	touchRead_customIPC(&touch);
+	struct touchScr touchScrStruct;
+	touchScrRead(&touchScrStruct);
+	int keysheld = keysHeld();
 	
-	if(MyIPC->touched > 0){
+	if(keysheld & KEY_TOUCH){
 		IPC_KEYS |= KEY_TOUCH;
 	}
 	else{
@@ -90,10 +90,10 @@ void touch_update() {
 	}
 	
 	if(IPC_KEYS & KEY_TOUCH) {
-		last_x=touch.px;
-		IPC_TOUCH_X=touch.px;
-		last_y=touch.py;
-		IPC_TOUCH_Y=touch.py;
+		last_x=touchScrStruct.touchXpx;
+		IPC_TOUCH_X=touchScrStruct.touchXpx;
+		last_y=touchScrStruct.touchYpx;
+		IPC_TOUCH_Y=touchScrStruct.touchYpx;
 		if(ts<3)
 			ts++;
 	} else {
@@ -487,7 +487,7 @@ void rescale(int a, int b)
 			__emuflags |= SCREENSWAP;
 			all_pix_start = 0;
 			all_pix_end = 1 - pos;
-			lcdMainOnBottom();
+			SET_MAIN_BOTTOM_LCD();
 			REG_BG3Y_SUB = (-(192 + pos)) << 8;
 		} else {
 			__emuflags &= ~SCREENSWAP;
@@ -495,7 +495,7 @@ void rescale(int a, int b)
 			if(all_pix_start > 239)
 				all_pix_start = 239;
 			all_pix_end = 240;
-			lcdMainOnTop();
+			SET_MAIN_TOP_LCD();
 			REG_BG3Y_SUB = 0;
 		}
 
@@ -514,7 +514,7 @@ void debugwrite_c(int val, int addr)
 {
 	char buf[64];
 	sprintf(buf, "addr:%04X, val:%02X\n", addr, val);
-	nocashMessage(buf);
+	//nocashMessage(buf);
 }
 
 int topvalue(int a,int b){

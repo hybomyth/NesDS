@@ -1,6 +1,11 @@
-#include <nds.h>
+#include "typedefsTGDS.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
 #include "ds_misc.h"
 #include "c_defs.h"
+#include "videoTGDS.h"
+#include "consoleTGDS.h"
 
 extern u16 font;
 extern u16 fontpal;
@@ -70,18 +75,18 @@ char cusfont[] = {
 void showconsole() {
 	//clearconsole();
 	if(__emuflags & ALLPIXEL) {
-		videoSetModeSub(MODE_0_2D);
-		videoBgDisableSub(3);
-		dmaFillWords(0, BG_GFX_SUB , 192 * 256);		//clear the sub screen
-		dmaCopyHalfWords(3,&font,(u16*)(SUB_CHR+0x400),1024*4);
-		dmaCopyHalfWords(3,cusfont,(u16*)(SUB_CHR+0x1400),6*32);
-		dmaCopyHalfWords(3,&fontpal,(u16*)BG_PALETTE_SUB,128);
+		SETDISPCNT_SUB(MODE_0_2D);
+		DISABLE_BG_SUB(3);
+		dmaFillWord(3,0, (uint32)BG_GFX_SUB, 192 * 256);	//clear the sub screen
+		dmaTransferHalfWord(3,&font,(u16*)(SUB_CHR+0x400),1024*4);
+		dmaTransferHalfWord(3,cusfont,(u16*)(SUB_CHR+0x1400),6*32);
+		dmaTransferHalfWord(3,&fontpal,(u16*)BG_PALETTE_SUB,128);
 	}
 	__emuflags &= ~ALLPIXEL;
 
-	powerOn(POWER_2D_B);
-	powerOn(PM_BACKLIGHT_BOTTOM | PM_BACKLIGHT_TOP);
-	lcdMainOnTop();
+	powerON(POWER_2D_B);
+	powerON(PM_BACKLIGHT_BOTTOM | PM_BACKLIGHT_TOP);
+	SET_MAIN_TOP_LCD();
 	screen_swap = 0;
 	REG_DISPCNT_SUB=MODE_0_2D|DISPLAY_BG0_ACTIVE|DISPLAY_BG1_ACTIVE|DISPLAY_WIN0_ON;
 	REG_BG0CNT_SUB=BG_TILE_BASE(1)|BG_64x32;
@@ -100,7 +105,7 @@ void showconsole() {
 	SUB_WIN_IN=1;
 	SUB_WIN_OUT=2;
 
-	swiWaitForVBlank();
+	IRQVBlankWait();
 }
 
 /*****************************
@@ -110,47 +115,47 @@ void showconsole() {
 * description:		hide the screen. Called when you click 'exit'.
 ******************************/
 void hideconsole() {
-	swiWaitForVBlank();
-	//powerOff(POWER_2D_B);
+	IRQVBlankWait();
+	//powerOFF(POWER_2D_B);
 	if((!(__emuflags & ALLPIXELON))) {
 		__emuflags &= ~ALLPIXEL;
 		if(!(__emuflags & SCREENSWAP)) {
-			powerOff(PM_BACKLIGHT_BOTTOM);			//This cannot be accessed directly.
-			powerOn(PM_BACKLIGHT_TOP);
-			lcdMainOnTop();
+			powerOFF(PM_BACKLIGHT_BOTTOM);			//This cannot be accessed directly.
+			powerON(PM_BACKLIGHT_TOP);
+			SET_MAIN_TOP_LCD();
 		} else {
-			powerOn(PM_BACKLIGHT_BOTTOM);
-			powerOff(PM_BACKLIGHT_TOP);
-			lcdMainOnBottom();
+			powerON(PM_BACKLIGHT_BOTTOM);
+			powerOFF(PM_BACKLIGHT_TOP);
+			SET_MAIN_BOTTOM_LCD();
 		}
 	} else {
 		int pos = ad_ypos / (1 << 16);
 
 		__emuflags |= ALLPIXEL;
-		dmaFillWords(0, BG_GFX_SUB , 192 * 256);		//clear the sub screen
-		dmaCopy(BG_PALETTE, BG_PALETTE_SUB, 0x400);		//copy the palette
-		powerOn(PM_BACKLIGHT_BOTTOM);
-		powerOn(PM_BACKLIGHT_TOP);
+		dmaFillWord(3,0, BG_GFX_SUB , 192 * 256);		//clear the sub screen
+		dmaTransferWord(3,(uint32)BG_PALETTE, (uint32)BG_PALETTE_SUB, 0x400);		//copy the palette
+		powerON(PM_BACKLIGHT_BOTTOM);
+		powerON(PM_BACKLIGHT_TOP);
 
 		if(pos < -(240 - 192)/2) {
 			__emuflags |= SCREENSWAP;
 			all_pix_start = 0;
 			all_pix_end = 1 - pos;
-			lcdMainOnBottom();
+			SET_MAIN_BOTTOM_LCD();
 		} else {
 			__emuflags &= ~SCREENSWAP;
 			all_pix_start = 192 - pos;
 			if(all_pix_start > 239)
 				all_pix_start = 239;
 			all_pix_end = 240;
-			lcdMainOnTop();
+			SET_MAIN_TOP_LCD();
 		}
-		videoSetModeSub(MODE_5_2D);
-		videoBgEnableSub(3);
+		SETDISPCNT_SUB(MODE_5_2D);
+		ENABLE_BG_SUB(3);
 		BGCTRL_SUB[3] = (typeof(BGCTRL_SUB[3]))(BgSize_B8_256x256 | BG_MAP_BASE(0) | BG_TILE_BASE(0));
-		swiWaitForVBlank();
-		videoSetModeSub(MODE_5_2D);
-		videoBgEnableSub(3);
+		IRQVBlankWait();
+		SETDISPCNT_SUB(MODE_5_2D);
+		ENABLE_BG_SUB(3);
 		BGCTRL_SUB[3] = (typeof(BGCTRL_SUB[3]))(BgSize_B8_256x256  | BG_MAP_BASE(0) | BG_TILE_BASE(0));
 		rescale(ad_scale, ad_ypos);
 	}
@@ -174,9 +179,9 @@ void clearconsole() {
 * description:		none
 ******************************/
 void consoleinit() {
-	dmaCopyHalfWords(3,&font,(u16*)(SUB_CHR+0x400),1024*4);
-	dmaCopyHalfWords(3,cusfont,(u16*)(SUB_CHR+0x1400),6*32);
-	dmaCopyHalfWords(3,&fontpal,(u16*)BG_PALETTE_SUB,128);
+	dmaTransferHalfWord(3,(uint32)&font,(uint32)(SUB_CHR+0x400),1024*4);
+	dmaTransferHalfWord(3,(uint32)cusfont,(uint32)(SUB_CHR+0x1400),6*32);
+	dmaTransferHalfWord(3,(uint32)&fontpal,(uint32)BG_PALETTE_SUB,128);
 	showconsole();
 }
 

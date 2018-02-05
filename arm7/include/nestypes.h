@@ -1,6 +1,6 @@
 #ifndef NESTYPES_H__
 #define NESTYPES_H__
-
+/*
 #if defined(_MSC_VER)
 #define NEVER_REACH __assume(0);
 #elif defined(__BORLANDC__)
@@ -11,11 +11,12 @@
 	#if !defined(__fastcall)
 	#define __fastcall
 	#endif
-	
+
 #else
 #define __inline
 #define __fastcall
 #endif
+*/
 #ifndef NEVER_REACH
 #define NEVER_REACH
 #endif

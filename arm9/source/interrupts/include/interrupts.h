@@ -1,44 +1,44 @@
-//these just extend libnds interrupt libraries
-#ifndef nds_interrupt9_headers
-#define nds_interrupt9_headers
+/*
 
-#include <nds.h>
+			Copyright (C) 2017  Coto
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
 
-#include <nds/interrupts.h>
-#include <nds/system.h>
-#include <nds/ipc.h>
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
 
-#ifdef ARM7
-#include <nds/arm7/i2c.h>
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+USA
+
+*/
+
+#ifndef __interrupts9_h__
+#define __interrupts9_h__
+
+#include "InterruptsARMCores_h.h"
+#include "specific_shared.h"
+#include "guiTGDS.h"
+#include "dsregs_asm.h"
+#include "main.h"
+#include "keypadTGDS.h"
+#include "interrupts.h"
+
 #endif
 
 
-#endif
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
-//external (usermode)
-extern void vcounter();
+extern void Vcounter();
 extern void Vblank();
 extern void Hblank();
-extern void initirqs();
-extern void refreshNESjoypads();
-
-//internal code (kernel)
-extern void IntrMainExt();
-
-//libnds
-extern void irqDummy(void);
-extern struct IntTable irqTable[MAX_INTERRUPTS];
-//extern struct IntTable irqTable[MAX_INTERRUPTS] INT_TABLE_SECTION;
-
-#ifdef INT_TABLE_SECTION
-#else
-extern struct IntTable irqTable[MAX_INTERRUPTS];
-#endif
-
-extern void irqInitExt(IntFn handler);
 
 #ifdef __cplusplus
 }

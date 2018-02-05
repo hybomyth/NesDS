@@ -10,9 +10,9 @@ coto: VERY experimental UDP netplay. I call the library "DSWNIFI" since it allow
 	How to use:
 		step 1)
 		at arm9main.c:
-		switch_dswnifi_mode((u8)dswifi_wifimode); sets WIFI UDP Netplay. Follow step 2
+		switch_dswnifi_mode((u8)dswifi_udpnifimode); sets WIFI UDP Netplay. Follow step 2
 		
-		switch_dswnifi_mode((u8)dswifi_nifimode); sets NIFI. you can choose NIFI like nesds1.3c did and forget about UDP (no more steps)
+		switch_dswnifi_mode((u8)dswifi_localnifimode); sets NIFI. you can choose NIFI like nesds1.3c did and forget about UDP (no more steps)
 		
 		step 2)
 		set some AP where your DSes and the PC can connect (WIFI). Since I tested this on an old android phone (OPEN, no security), the server is hardcoded at 192.168.43.220 (set that IP statically at server)
@@ -21,7 +21,7 @@ coto: VERY experimental UDP netplay. I call the library "DSWNIFI" since it allow
 		run dswnifi-pc-software-companion.exe (14KB, no virus, there's the source if you want to see it for yourself.. ). You'll see a console that tells you to connect 2 DSes
 		
 		step 4)
-		if you set dswifi_wifimode at step1, boot nesds and choose any game, it should connect and you should see some caracters at console. You need two DS consoles connected for this to work.
+		if you set dswifi_udpnifimode at step1, boot nesds and choose any game, it should connect and you should see some caracters at console. You need two DS consoles connected for this to work.
 		When you are done, both DSes should be connected, and game will start... through UDP! I told you it was laggy and desync'd!
 	
 	Changes:

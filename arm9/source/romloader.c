@@ -1,4 +1,7 @@
-#include <nds.h>
+#include "typedefsTGDS.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <dirent.h>
@@ -11,7 +14,28 @@
 
 #include "interrupts.h"
 #include "touch_ipc.h"
-#include "common_shared.h"
+#include "specific_shared.h"
+
+#include "touch_ipc.h"
+
+#include <string.h>
+#include <stdarg.h>
+#include <ctype.h>
+#include <stdlib.h>
+
+#include "specific_shared.h"
+#include "devoptab_devices.h"
+#include "posixHandleTGDS.h"
+#include "utilsTGDS.h"
+
+#include "guiTGDS.h"
+#include "nds_cp15_misc.h"
+
+#include <unistd.h>
+#include <sys/dir.h>
+#include <fcntl.h>
+#include "fsfatlayerTGDS.h"
+#include "fileHandleTGDS.h"
 
 extern int subscreen_stat;
 extern int shortcuts_tbl[16];
@@ -91,7 +115,7 @@ void do_rommenu() {
 		} else						//no DLDI error, no files
 			consoletext(64*3,"No roms found.",0);
 		
-		while(1) swiWaitForVBlank();
+		while(1) IRQVBlankWait();
 	}
 	showconsole();
 	clearconsole();
@@ -125,7 +149,7 @@ void rommenu(int roms) {
 	else
 		key=0x80000000;
 	do {
-		swiWaitForVBlank();
+		IRQVBlankWait();
 		switch(key) {
 			case KEY_START:
 			case KEY_B:
@@ -270,7 +294,7 @@ int loadrom(int rom) {
 			if(strstr(files[rom]+1, ".GZ") || strstr(files[rom]+1, ".gz") ||
 				strstr(files[rom]+1, ".ZIP") || strstr(files[rom]+1, ".zip")
 			) {	// a gz file is loaded.
-				if(load_gz(files[rom]+1)) {
+				if(nesdsload_gz(files[rom]+1)) {
 					return 1;	//fail to unzip.
 				}
 				f=fopen(tmpname,"r");
@@ -515,7 +539,7 @@ int bootext() {
 	return 1;
 }
 
-int load_gz(const char *fname)
+int nesdsload_gz(const char *fname)
 {
 #if 1
 	int ret;

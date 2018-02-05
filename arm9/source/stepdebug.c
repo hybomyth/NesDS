@@ -1,10 +1,13 @@
-#include <nds.h>
+#include "typedefsTGDS.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
 #include "ds_misc.h"
 #include "c_defs.h"
 
 #include "interrupts.h"
 #include "touch_ipc.h"
-#include "common_shared.h"
+#include "specific_shared.h"
 
 extern u32 __nz;
 extern u32 __a;
@@ -75,7 +78,7 @@ void stepdebug()
 	opcount++;
 	if(line == 240 && __scanline == 241) {
 		framecount++;
-		swiWaitForVBlank();
+		IRQVBlankWait();
 		//keys = IPC_KEYS;
 		keys &= ~KEY_SELECT;
 	}
@@ -130,7 +133,7 @@ void stepdebug()
 			//pstep = stepinfo;
 			break;
 		}
-		swiWaitForVBlank();
+		IRQVBlankWait();
 		oldkeys = 0;
 	}
 	while(1);

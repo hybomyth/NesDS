@@ -43,7 +43,7 @@ void NESVolume(Uint volume);
 void NESAudioFilterSet(Uint filter);
 extern void (*FDSSoundWriteHandler)(Uint address, Uint value);
 void FDSSoundInstall(void);
-
+extern const short logtable[1024];
 #ifdef __cplusplus
 }
 #endif

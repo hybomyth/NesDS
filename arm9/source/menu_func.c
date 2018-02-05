@@ -1,4 +1,7 @@
-#include <nds.h>
+#include "typedefsTGDS.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -6,8 +9,8 @@
 #include "c_defs.h"
 #include "menu.h"
 
-#include "common_shared.h"
-#include "nifi.h"
+#include "specific_shared.h"
+#include "dswnifi_lib.h"
 #include "multi.h"
 
 extern u32 agb_bg_map[];
@@ -409,8 +412,8 @@ void menu_display_br(void)
 			switch(type) {
 			case 0:	
 				{
-					videoSetMode(MODE_0_2D);
-					videoBgDisable(3);
+					SETDISPCNT_MAIN(MODE_0_2D);
+					DISABLE_BG_MAIN(3);
 					for(i = 0; i < 4*8/4; i++) {
 						agb_bg_map[i] = -1;
 					}
@@ -418,8 +421,8 @@ void menu_display_br(void)
 				break;
 			case 1: //sp-perline
 				{
-					videoSetMode(MODE_0_2D);
-					videoBgDisable(3);
+					SETDISPCNT_MAIN(MODE_0_2D);
+					DISABLE_BG_MAIN(3);
 					for(i = 0; i < 4*8/4; i++) {
 						agb_bg_map[i] = -1;
 					}
@@ -427,17 +430,17 @@ void menu_display_br(void)
 				break;
 			case 2: //pure-soft
 				{
-					videoSetMode(MODE_5_2D);
-					videoBgEnable(3);
+					SETDISPCNT_MAIN(MODE_5_2D);
+					ENABLE_BG_MAIN(3);
 					BGCTRL[3] = (typeof(BGCTRL_SUB[3]))(BgSize_B8_256x256 | BG_MAP_BASE(0) | BG_TILE_BASE(0));	//This is weird....
 					//bgInit(3, BgType_Bmp8, BgSize_B8_256x256, 0,0);
 					REG_BG3PA = 256;
 					REG_BG3PB = 0;
 					REG_BG3PC = 0;
 					REG_BG3PD = 512 - (ad_scale >> 8);
-					swiWaitForVBlank();
-					videoSetMode(MODE_5_2D);
-					videoBgEnable(3);
+					IRQVBlankWait();
+					SETDISPCNT_MAIN(MODE_5_2D);
+					ENABLE_BG_MAIN(3);
 					BGCTRL[3] = (typeof(BGCTRL_SUB[3]))(BgSize_B8_256x256  | BG_MAP_BASE(0) | BG_TILE_BASE(0));
 					REG_BG3PA = 256;
 					REG_BG3PB = 0;
@@ -520,22 +523,24 @@ void menu_nifi_action(void)
 		if(lastbutton_type == 2) {
 			switch(lastbutton_cnt) {
 				case 0:{
-					if(MyIPC->dswifiSrv.dsnwifisrv_mode != dswifi_wifimode){	//cant enable nifi if wifimode is active
+					if(getDSWNIFIStr()->dsnwifisrv_mode != dswifi_udpnifimode){	//cant enable nifi if wifimode is active
 						nifi_stat = 1;
-						switch_dswnifi_mode((u8)dswifi_nifimode);	//should be handled later at multi (nifimode)
+						//local nifi: 
+						switch_dswnifi_mode(dswifi_localnifimode);	//LOCAL NIFI:
 					}
 				}
 				break;
 				case 1:{
-					if(MyIPC->dswifiSrv.dsnwifisrv_mode != dswifi_wifimode){	//cant enable nifi if wifimode is active
+					if(getDSWNIFIStr()->dsnwifisrv_mode != dswifi_udpnifimode){	//cant enable nifi if wifimode is active
 						nifi_stat = 2;
-						switch_dswnifi_mode((u8)dswifi_nifimode);	//should be handled later at multi (nifimode)	
+						//udp nifi:
+						switch_dswnifi_mode(dswifi_udpnifimode);	//UDP NIFI: Check readme
 					}
 				}
 				break;
 				case 2:{
 					nifi_stat = 0;								//cancel nifi & wifi buttons
-					switch_dswnifi_mode((u8)dswifi_nifimode);	//disconnect should will happen later (requires nifimode)
+					switch_dswnifi_mode(dswifi_idlemode);
 				}
 				break;
 				
@@ -627,9 +632,9 @@ void menu_extra_action(void)
 				menu_stat = 0;
 				menu_draw = 0;
 				__emuflags |= SCREENSWAP;
-				lcdMainOnBottom();
-				powerOn(PM_BACKLIGHT_BOTTOM);
-				powerOff(PM_BACKLIGHT_TOP);
+				SET_MAIN_BOTTOM_LCD();
+				powerON(PM_BACKLIGHT_BOTTOM);
+				powerOFF(PM_BACKLIGHT_TOP);
 				break;
 			case 3:
 				last_menu = &menuextra_fds;

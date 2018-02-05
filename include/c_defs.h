@@ -8,7 +8,7 @@
 #ifndef common_ipc
 #define common_ipc
 
-#include "common_shared.h"
+#include "specific_shared.h"
 
 #endif
 #endif
@@ -76,36 +76,36 @@ typedef struct {	//rom info from builder
 extern int soft_frameskip;
 extern int global_playcount;
 extern int subscreen_stat;
-void showversion();
-void play(void);
-void recorder_reset(void);
+extern void showversion();
+extern void play(void);
+extern void recorder_reset(void);
 
 //console.c
 #define SUB_CHR 0x6204000
 #define SUB_BG 0x6200000
-void consoleinit(void);
+extern void consoleinit(void);
 #define hex8(a,b) hex(a,b,1)
 #define hex16(a,b) hex(a,b,3)
 #define hex24(a,b) hex(a,b,5)
 #define hex32(a,b) hex(a,b,7)
-void hex(int offset,int d,int n);
-void consoletext(int offset,char *s,int color);
-void menutext(int line,char *s,int selected);
-void clearconsole(void);
-void hideconsole(void);
-void showconsole(void);
+extern void hex(int offset,int d,int n);
+extern void consoletext(int offset,char *s,int color);
+extern void menutext(int line,char *s,int selected);
+extern void clearconsole(void);
+extern void hideconsole(void);
+extern void showconsole(void);
 
 //subscreen.c
-int debugdump(void);
+extern int debugdump(void);
 
 #define VBLS 6
 #define FPS 7
 extern u32 debuginfo[];
-int debugdump(void);
+extern int debugdump(void);
 
 //romloader.c
-int romsize;
-int bootext();
+extern int romsize;
+extern int bootext();
 extern int active_interface;
 extern char romfilename[256];
 extern char *romfileext;
@@ -262,7 +262,7 @@ extern void setbarcodedata( char *code, int len );
 //memory.s
 extern u8 rom_start[];
 extern u8 rom_files[];
-extern u32 ipc_region[];
+extern u8 * ipc_region;	//u32 ipc_region[];
 extern u8 nes_region[];
 extern u8 ct_buffer[];
 
@@ -288,7 +288,7 @@ extern void crcinit();
 extern void romcorrect(char *s);
 
 //zip
-extern int load_gz(const char *fname);
+extern int nesdsload_gz(const char *fname);
 int do_decompression(const char *inname, const char *outname);
 
 #define MP_KEY_MSK		0x0CFF		

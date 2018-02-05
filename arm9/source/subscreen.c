@@ -1,4 +1,7 @@
-#include <nds.h>
+#include "typedefsTGDS.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
 #include "ds_misc.h"
 #include "c_defs.h"
 

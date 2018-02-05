@@ -1,4 +1,7 @@
-#include <nds.h>
+#include "typedefsTGDS.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -7,8 +10,9 @@
 #include "ds_misc.h"
 #include "c_defs.h"
 #include "menu.h"
+#include "clockTGDS.h"
 
-#include "common_shared.h"
+#include "specific_shared.h"
 
 
 struct menu_item menu_file_items[] = {
@@ -747,9 +751,10 @@ void do_menu()
 			}
 			*/
 			
+			struct tm * tmInst = getTime();
 			//coto: new ipc
-			static char buf[20];
-			sprintf(buf, "%02d:%02d", (int)gba_get_hourrtc(), (int)gba_get_minrtc());
+			char buf[64] = {0};
+			sprintf(buf, "%02d:%02d", (int)tmInst->tm_hour, (int)tmInst->tm_min);
 			consoletext(64*2 - 12, buf, 0);
 		}
 

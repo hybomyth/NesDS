@@ -1,6 +1,5 @@
-
-#ifndef GBAEMU4DS_ARM9TOUCH
-#define GBAEMU4DS_ARM9TOUCH
+#ifndef nesds_main7__
+#define nesds_main7__
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"
@@ -10,10 +9,13 @@
 
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
-extern u32 keyscurr_ipc();
+extern int ipc_region;
+
 #ifdef __cplusplus
 }
 #endif
+
+

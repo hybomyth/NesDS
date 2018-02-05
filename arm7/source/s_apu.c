@@ -1,4 +1,7 @@
-#include <nds.h>
+#include "typedefsTGDS.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
 #include <string.h>
 #include "nestypes.h"
 #include "audiosys.h"
@@ -10,7 +13,7 @@
 #include "c_defs.h"
 #include "s_vrc6.h"
 
-#include "common_shared.h"
+#include "specific_shared.h"
 
 #define NES_BASECYCLES (21477270)
 

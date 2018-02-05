@@ -1,4 +1,7 @@
-#include <nds.h>
+#include "typedefsTGDS.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
 #include <stdio.h>
 #include <string.h>
 #include "ds_misc.h"
@@ -69,7 +72,7 @@ void do_gesture(void)
 
 	if(gesture_type == 0 && touchstate == 2) {
 		memset((void *)(SUB_BG),0,64*24);
-		powerOn(PM_BACKLIGHT_BOTTOM | PM_BACKLIGHT_TOP);
+		powerON(PM_BACKLIGHT_BOTTOM | PM_BACKLIGHT_TOP);
 		consoletext(64 * 4 + 16, "Gesture Motions:", 0);
 		gesture_type = 1;
 		gesture_x = last_x;
@@ -123,9 +126,9 @@ void do_gesture(void)
 			int i;
 
 			if(!(__emuflags & SCREENSWAP)) {
-				powerOff(PM_BACKLIGHT_BOTTOM);
+				powerOFF(PM_BACKLIGHT_BOTTOM);
 			} else {
-				powerOff(PM_BACKLIGHT_TOP);
+				powerOFF(PM_BACKLIGHT_TOP);
 			}
 		
 			do_gesture_type = -1;
@@ -146,9 +149,9 @@ void do_gesture(void)
 		}
 		else if(__emuflags & LIGHTGUN) {
 			if(!(__emuflags & SCREENSWAP)) {
-				powerOff(PM_BACKLIGHT_BOTTOM);
+				powerOFF(PM_BACKLIGHT_BOTTOM);
 			} else {
-				powerOff(PM_BACKLIGHT_TOP);
+				powerOFF(PM_BACKLIGHT_TOP);
 			}
 		}
 	}

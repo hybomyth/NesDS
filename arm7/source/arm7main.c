@@ -1,4 +1,7 @@
-#include <nds.h>
+#include "typedefsTGDS.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
 #include <string.h>
 #include "c_defs.h"
 #include "ds_misc.h"
@@ -6,14 +9,15 @@
 #include "audiosys.h"
 #include "handler.h"
 #include "arm7.h"
-#include "common_shared.h"
+#include "specific_shared.h"
 
-
+#include "timerTGDS.h"
+#include "CPUARMTGDS.h"
+#include "audiosys.h"
 
 static int chan = 0;
 
-const short logtable[1024];
-static inline short soundconvert(short output, int sft)
+static short soundconvert(short output, int sft)
 {
 	if(output >= 0) {
 		output = logtable[output << sft];
@@ -38,8 +42,8 @@ void restartsound(int ch) {
 
 	SCHANNEL_CR(10)=SCHANNEL_ENABLE|SOUND_REPEAT |SOUND_VOL(0x7F)|SOUND_PAN(0x40)|SOUND_FORMAT_8BIT;
 
-	TIMER0_CR = TIMER_ENABLE; 
-	TIMER1_CR = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
+	TIMERXCNT(0) = TIMER_ENABLE; 
+	TIMERXCNT(1) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
 }
 
 void stopsound() {
@@ -53,8 +57,8 @@ void stopsound() {
 	SCHANNEL_CR(7)=0;
 	SCHANNEL_CR(8)=0;
 	SCHANNEL_CR(10)=0;
-	TIMER0_CR = 0;
-	TIMER1_CR = 0;
+	TIMERXCNT(0) = 0;
+	TIMERXCNT(1) = 0;
 }
 
 int pcmpos = 0;
@@ -161,7 +165,7 @@ void mix(int chan) {
 
 void initsound() { 		
 	int i;
-	powerOn(POWER_SOUND); 
+	powerON(POWER_SOUND); 
 	REG_SOUNDCNT = SOUND_ENABLE | SOUND_VOL(0x7F);
 	for(i = 0; i < 16; i++) {
 		SCHANNEL_CR(i) = 0;
@@ -206,8 +210,9 @@ void initsound() {
 	SCHANNEL_REPEAT_POINT(1) = 0; 
 	SCHANNEL_REPEAT_POINT(8) = 0; 
 	SCHANNEL_REPEAT_POINT(10) = 0; 
-	TIMER0_DATA = -0x572;
-	TIMER1_DATA = 0x10000 - MIXBUFSIZE;
+	
+	TIMERXDATA(0) = -0x572;
+	TIMERXDATA(1) = 0x10000 - MIXBUFSIZE;
 	memset((u32*)buffer, 0, sizeof(buffer));
 
 	memset(IPC_PCMDATA, 0, 512);
@@ -290,7 +295,7 @@ void nesmain() {
 	resetAPU();
 	NESVolume(0);
 	
-	swiWaitForVBlank();
+	IRQVBlankWait();
 	initsound();
 	restartsound(1);
 

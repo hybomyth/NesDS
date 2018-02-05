@@ -140,7 +140,7 @@ soft_render:
 
 	@coto: not required
 	@stmfd sp!, {r3-r4, lr}
-	@bl swiWaitForVBlank
+	@bl IRQVBlankWait
 	@ldmfd sp!, {r3-r4, pc}
 	
 	@new
