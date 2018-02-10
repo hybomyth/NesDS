@@ -113,7 +113,6 @@ int main() {
 	//mixBuffer = (sint32 *)vramAlloc(vramBlockD,(uint32)0x06000000,(256));
     //2)
 	installWifiFIFO();		//use DSWIFI
-	initTGDSAudioSystem();	//Init Audio NDS7
 	
     int i   = 0;
 	//REG_IME = 0;
