@@ -16,29 +16,30 @@
 #USA
 #
 
+#TGDS1.3 compatible Makefile
+
+#ToolchainGenericDS specific: Use Makefiles from either TGDS, or custom
+export SOURCE_MAKEFILE7 = default
+export SOURCE_MAKEFILE9 = default
+
 # Project Specific
 export EXECUTABLE_FNAME = NesDS.nds
 export EXECUTABLE_VERSION_HEADER =	1.3c
 export EXECUTABLE_VERSION =	"$(EXECUTABLE_VERSION_HEADER)"
-
 export GAME_TITLE	:=	nesDS
 export GAME_SUBTITLE1	:=	$(EXECUTABLE_VERSION_HEADER)
 export GAME_SUBTITLE2	:=	Enjoy yourself!
 
-# MISC/Dir Definitions
+# TGDS Generic start
 #The ndstool I use requires to have the elf section removed, so these rules create elf headerless- binaries.
 export BINSTRIP_RULE_7 =	arm7.bin
 export BINSTRIP_RULE_9 =	arm9.bin
-
 export DIR_ARM7 = arm7
 export BUILD_ARM7	=	build
-
 export DIR_ARM9 = arm9
 export BUILD_ARM9	=	build
-
 export ELF_ARM7 = arm7.elf
 export ELF_ARM9 = arm9.elf
-
 
 # Shared
 export GCC_BUILD_ENV	= $(DEFAULT_GCC_PATH)
@@ -54,8 +55,6 @@ export OBJCOPY	=	$(GCC_BUILD_ENV)$(GCC_BIN_PATH)$(GCC_OBJCOPY)
 export NDSTOOL	=	$(GCC_BUILD_ENV)$(GCC_BIN_PATH)ndstool.exe
 export AR	=	$(GCC_BUILD_ENV)$(GCC_BIN_PATH)arm-none-eabi-ar.exe
 export LD	=	$(GCC_BUILD_ENV)$(GCC_BIN_PATH)arm-none-eabi-ld.exe
-
-#add bin2c rule
 export BIN2C	=	$(GCC_BUILD_ENV)$(GCC_BIN_PATH)bin2c.exe
 
 #GCC Defs
@@ -69,6 +68,9 @@ export DIRLIBS_ALLOWED =	-I "$(TOOLCHAIN_PATH)newlib-nano-2.1-nds/include/"	-I "
 export TARGET_LIBRARY_PATH =	$(TOOLCHAIN_LIBRARY_SRCPATH)/lib/newlib-nano-2.1-nds
 export LIBPATHNEWLIB	= 	$(TOOLCHAIN_LIBRARY_SRCPATH)/lib/newlib-nano-2.1-nds/
 export TARGET_LIBRARY_LINKER_SRC = /linkers
+export TARGET_LIBRARY_LINKER_DEST = $(TARGET_LIBRARY_PATH)
+export TARGET_LIBRARY_MAKEFILES_SRC = /TGDSMakefiles
+export TARGET_LIBRARY_MAKEFILES_DEST = $(TARGET_LIBRARY_PATH)
 export TARGET_LIBRARY_CRT0_FILE_7 = nds_arm_ld_crt0
 export TARGET_LIBRARY_CRT0_FILE_9 = nds_arm_ld_crt0
 export TARGET_LIBRARY_LINKER_FILE_7 = $(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_LINKER_SRC)/$(TARGET_LIBRARY_CRT0_FILE_7).S
@@ -87,8 +89,12 @@ export TARGET_LIBRARY_LIBNAME_9	=	l$(TARGET_LIBRARY_NAME_9)
 #default built-in rules removal
 MAKEFLAGS += --no-builtin-rules
 
-.SUFFIXES:
-.SUFFIXES: .all
+#cleanup default C/C++/ASM flags
+export CFLAGS	=''
+export CPPFLAGS	=''
+export ASFLAGS	=''
+export VPATH 	=''
+# TGDS Generic end
 
 #####################################################ARM7#####################################################
 
@@ -130,12 +136,6 @@ export DIRS_ARM9_HEADER =	source/interrupts/include/	\
 			source/fs_ext/	\
 			../common/	\
 			data/
-			
-#cleanup default C/C++/ASM flags
-export CFLAGS	=''
-export CPPFLAGS	=''
-export CPPFLAGS	=''
-export ASFLAGS	=''
 
 # Build Target(s)	(both processors here)
 all: $(EXECUTABLE_FNAME)
@@ -146,7 +146,13 @@ all: $(EXECUTABLE_FNAME)
 
 #Make
 compile	:
+ifeq ($(SOURCE_MAKEFILE7),default)
+	cp	-r	$(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_MAKEFILES_SRC)/$(DIR_ARM7)/Makefile	$(CURDIR)/$(DIR_ARM7)
+endif
 	$(MAKE)	-R	-C	$(DIR_ARM7)/
+ifeq ($(SOURCE_MAKEFILE9),default)
+	cp	-r	$(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_MAKEFILES_SRC)/$(DIR_ARM9)/Makefile	$(CURDIR)/$(DIR_ARM9)
+endif
 	$(MAKE)	-R	-C	$(DIR_ARM9)/
 
 $(EXECUTABLE_FNAME)	:	compile
@@ -160,8 +166,11 @@ each_obj = $(foreach dirres,$(dir_read_arm9_files),$(dirres).)
 	
 clean:
 	$(MAKE)	clean	-C	$(DIR_ARM7)/
+ifeq ($(SOURCE_MAKEFILE7),default)
+	-@rm -rf $(CURDIR)/$(DIR_ARM7)/Makefile
+endif
 	$(MAKE)	clean	-C	$(DIR_ARM9)/
+ifeq ($(SOURCE_MAKEFILE9),default)
+	-@rm -rf $(CURDIR)/$(DIR_ARM9)/Makefile
+endif
 	-@rm -fr $(EXECUTABLE_FNAME)
-
-debug:
-	-@echo '$(TARGET_LIBRARY_LINKER_PATH_LD)'
