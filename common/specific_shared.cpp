@@ -17,14 +17,12 @@ USA
 */
 
 //TGDS IPC Version: 1.3
-
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
 
 #include "ipcfifoTGDS.h"
 #include "specific_shared.h"
-
 
 
 #ifdef ARM7
@@ -48,6 +46,9 @@ USA
 #include "c_defs.h"
 #endif
 
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
 struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific(){
 	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (__attribute__((packed)) struct sIPCSharedTGDSSpecific*)(getUserIPCAddress());
 	return sIPCSharedTGDSSpecificInst;
@@ -79,8 +80,11 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2,uint32 cmd3,uint32 cmd4){
 		break;
 		//update apu from nds irq
 		case(fifo_nesapuwrite_ext):{
-			APUSoundWrite(cmd2&0xffff, cmd3&0xffff);
-			IPC_APUW++;
+			//send each chunk separately 
+			#ifdef ARM7
+			//APUSoundWrite(cmd2&0xffff, cmd3&0xffff);
+			//IPC_APUR = IPC_APUW = (int)cmd4;
+			#endif
 		}
 		break;
 		#endif
@@ -98,11 +102,17 @@ void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2,uint32 cmd3,uint32 cmd4){
 }
 
 
+bool getAPUStatus(){
+	return (bool)getsIPCSharedTGDSSpecific()->apu_ready;
+}
+void setAPUStatus(bool status){
+	getsIPCSharedTGDSSpecific()->apu_ready = status;
+}
+
 //Project Specific
 #ifdef ARM9
 void apusetup(){
-	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = getsIPCSharedTGDSSpecific();
-	sIPCSharedTGDSSpecificInst->IPC_ADDR = (u32*)ipc_region;
-	sIPCSharedTGDSSpecificInst->apu_ready = true;
+	getsIPCSharedTGDSSpecific()->IPC_ADDR = (u32*)ipc_region;
+	setAPUStatus(true);
 }
 #endif

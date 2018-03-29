@@ -48,11 +48,11 @@ __attribute__((section(".itcm")))
 void VblankUser(){
 	
 	//update when idle
-	if((getDSWNIFIStr()->dsnwifisrv_mode == dswifi_idlemode) || (getDSWNIFIStr()->dsnwifisrv_mode == dswifi_localnifimode)){
-		EMU_VBlank();
+	if((getMULTIMode() == dswifi_idlemode) || (getMULTIMode() == dswifi_localnifimode)){
+		EMU_VBlank();		
 	}
 	//only update screen when connected
-	else if(getDSWNIFIStr()->dsnwifisrv_mode == dswifi_udpnifimode){
+	else if(getMULTIMode() == dswifi_udpnifimode){
 		if( (nifi_stat == 5) || (nifi_stat == 6) ) {
 			
 			//update each host/guest framecounts
@@ -66,22 +66,17 @@ void VblankUser(){
 			
 			EMU_VBlank();
 			//iprintf("vblank! \n");
-			
-			if(nifi_stat == 5){
-			
-				//NDS -> NES PPU frame counter
-				if(nesds_framecount > 59) {
-					nesds_framecount=0;
-				}
-				else{
-					nesds_framecount++;
-				}
-				debuginfo[VBLS] = nesds_framecount;
-			
-			}
-			
 		}
 	}
+	
+	//NDS -> NES PPU frame counter
+	if(nesds_framecount > 59) {
+		nesds_framecount=0;
+	}
+	else{
+		nesds_framecount++;
+	}
+	debuginfo[VBLS] = nesds_framecount;
 	
 	//printf("vblank! \n");	
 }

@@ -12,6 +12,7 @@
 #include "specific_shared.h"
 #include "dswnifi_lib.h"
 #include "multi.h"
+#include "spifwTGDS.h"
 
 extern u32 agb_bg_map[];
 
@@ -438,7 +439,6 @@ void menu_display_br(void)
 					REG_BG3PB = 0;
 					REG_BG3PC = 0;
 					REG_BG3PD = 512 - (ad_scale >> 8);
-					IRQVBlankWait();
 					SETDISPCNT_MAIN(MODE_5_2D);
 					ENABLE_BG_MAIN(3);
 					BGCTRL[3] = (typeof(BGCTRL_SUB[3]))(BgSize_B8_256x256  | BG_MAP_BASE(0) | BG_TILE_BASE(0));
@@ -633,8 +633,7 @@ void menu_extra_action(void)
 				menu_draw = 0;
 				__emuflags |= SCREENSWAP;
 				SET_MAIN_BOTTOM_LCD();
-				powerON(PM_BACKLIGHT_BOTTOM);
-				powerOFF(PM_BACKLIGHT_TOP);
+				setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 				break;
 			case 3:
 				last_menu = &menuextra_fds;

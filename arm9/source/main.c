@@ -19,7 +19,6 @@
 #include "interrupts.h"
 #include "touch_ipc.h"
 #include "specific_shared.h"
-#include "gui_console_connector.h"
 
 
 //frameskip min = 1, max = xxxxxx....
@@ -28,7 +27,7 @@ int soft_frameskip = 3;
 #define SOFT_FRAMESKIP soft_frameskip
 
 #ifdef ROM_EMBEDED
-extern u8 __bss_end__[];
+//extern u8 __bss_end__[];	//__bss_end__ == the linker top section, add here the top of the linker map (and not the address : top memory available)
 extern void do_romebd();
 extern char romebd_s[];
 void do_romebd()
@@ -137,9 +136,9 @@ int nesds_framecount=0;	//global framecount emulator
 int main(int _argc, char **_argv) {
 	IRQInit();
 	
-	//add GUI!
 	bool project_specific_console = true;	//set default console or custom console: custom console
 	GUI_init(project_specific_console);
+	
 	sint32 fwlanguage = (sint32)getLanguage();
 	GUI_setLanguage(fwlanguage);
 	
@@ -147,11 +146,13 @@ int main(int _argc, char **_argv) {
 	if (ret == 0)
 	{
 		printf("FS Init OK");
+		active_interface = 1;
 		//FRESULT res = FS_chdir("0:/");
 	}
 	else if(ret == -1)
 	{
 		printf("FS Init ERROR. dldi failed. Check your cart");
+		active_interface = 0;
 		while(1);
 	}
 	
@@ -164,12 +165,6 @@ int main(int _argc, char **_argv) {
 	
 	int sramcount=0;
 	
-	
-	GUI_getROM(getfatfsPath((char*)"nes"));	//returns: file.ext-> szFile	<- char * recv from arg: full dir path to look files by extension at
-	GUI_deleteROMSelector();
-	sprintf(romFullPath,"%s%s",getfatfsPath("nes/"),romFile);
-	
-	consoleinit(); //init subscreen to show chars.
 	DS_init(); //DS init.
 	EMU_Init(); //emulation init.
 	apusetup();
@@ -178,13 +173,13 @@ int main(int _argc, char **_argv) {
 	IPC_APUIRQ = 0;
 	IPC_REG4015 = 0;
 
+	consoleinit(); //init subscreen to show chars.
 	crcinit();	//init the crc table.
 
 	//pre-alocate memory....
 	//IPC_FILES = malloc(MAXFILES * 256 + MAXFILES * 4);
 	//IPC_ROM = malloc(ROM_MAX_SIZE);
 
-	/*
 #ifndef ROM_EMBEDED
 	if(!bootext()) {
 		//chdir("/");
@@ -193,12 +188,6 @@ int main(int _argc, char **_argv) {
 #else
 	do_romebd();
 #endif
-	*/
-	
-	loadrom(romFullPath);
-	
-	
-	
 	
 	//__emuflags |= PALSYNC;
 	
@@ -215,8 +204,7 @@ int main(int _argc, char **_argv) {
 			debuginfo[FPS]=nesds_framecount;	
 		}
 		
-		//scanKeys();
-		IPC_KEYS = keyscurr_ipc();
+		IPC_KEYS = keysPressed();
 
 		//change nsf states
 		if(__emuflags & NSFFILE) {
@@ -265,14 +253,14 @@ int main(int _argc, char **_argv) {
 		bool dswnifi_frame = false;	//do_multi();	//add multi dswifi support
 		
 		//single player (for idle, nifi)
-		if((getDSWNIFIStr()->dsnwifisrv_mode == dswifi_idlemode) || (getDSWNIFIStr()->dsnwifisrv_mode == dswifi_localnifimode)){
+		if((getMULTIMode() == dswifi_idlemode) || (getMULTIMode() == dswifi_localnifimode)){
 			if(nifi_stat == 0){
 				play(); //emulate a frame of the NES game.
 			}
 		}
 		
 		//multi player	(for nifi)
-		if(getDSWNIFIStr()->dsnwifisrv_mode == dswifi_localnifimode){
+		if(getMULTIMode() == dswifi_localnifimode){
 			
 			if((nifi_stat == 5) || (nifi_stat == 6)){
 				

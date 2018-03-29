@@ -22,7 +22,7 @@ void Timer1handlerUser(){
 	if(REG_IF & IRQ_TIMER1) {
 		lidinterrupt();
 		chan = 1;
-		REG_IF = IRQ_TIMER1;
+		//REG_IF = IRQ_TIMER1;
 	}
 }
 

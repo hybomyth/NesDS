@@ -51,15 +51,15 @@ char romfilename[256];	//name of current rom.  null when there's no file (rom wa
 char *romfileext;	//points to file extension
 
 //extern u8 autostate;			//from ui.c
-int active_interface = 0;
+int active_interface = -1;	//not even inited
 
 void rommenu(int roms);
 void drawmenu(int sel,int roms);
-int getinput(void);
+//int getinput(void);
 
 int init_rommenu(void);
 void listrom(int line,int rom,int highlight); //print rom title
-//int loadrom(int rom);	//return -1 on success, or rom count (from directory change)
+int loadrom(int rom);	//return -1 on success, or rom count (from directory change)
 void stringsort(char**);
 
 void adjust_fds(char *name, char * rom)
@@ -103,7 +103,7 @@ void do_rommenu() {
 	//fifoSendValue32(FIFO_USER_08, FIFO_APU_PAUSE);			//disable sound when selecting a rom.
 	//SendArm7Command(FIFO_APU_PAUSE,0x0,0x0,0x0);
 	SendMultipleWordACK(FIFO_APU_PAUSE,0x0,0x0,0x0);
-	/*
+	
 	if(!global_roms) {
 		roms=init_rommenu();
 		global_roms = roms;
@@ -117,8 +117,6 @@ void do_rommenu() {
 		
 		while(1) IRQVBlankWait();
 	}
-	*/
-	
 	showconsole();
 	clearconsole();
 	showversion();
@@ -137,7 +135,7 @@ void do_rommenu() {
 ******************************/
 void rommenu(int roms) {
 	static int selectedrom=0;
-	int key;
+	int key = 0;
 	int sel=selectedrom;
 	int loaded=0;
 
@@ -151,13 +149,17 @@ void rommenu(int roms) {
 	else
 		key=0x80000000;
 	do {
-		IRQVBlankWait();
+		uint32 keysToPress = (KEY_UP|KEY_DOWN|KEY_LEFT|KEY_RIGHT|KEY_START|KEY_A|KEY_B|KEY_Y);
+		key=keysPressed() & keysToPress;
+		
+		while((keysPressed()&keysToPress)){}
+		
 		switch(key) {
 			case KEY_START:
 			case KEY_B:
 			case KEY_A:
 			case KEY_Y:
-				//loaded=loadrom(sel);
+				loaded=loadrom(sel);
 				if(loaded > 0) {	//didn't load (it was a directory) loaded == 0 means that ips file is loaded.
 					sel=0;
 					roms=loaded;
@@ -180,11 +182,11 @@ void rommenu(int roms) {
 				break;
 		}
 		sel%=roms;
-		if(key && loaded>=0)
-			drawmenu(sel,roms);
-		key=getinput();
-	} while(loaded>=0);
-
+		drawmenu(sel,roms);
+		while(!(keysPressed()&keysToPress)){}
+		
+	}while(loaded>=0);
+	
 	selectedrom=sel;
 
 	load_sram();
@@ -232,12 +234,12 @@ void drawmenu(int sel,int roms) {
 * argument:		none
 * description:		called by rommenu.
 ******************************/
+/*
 int getinput() {
 	static int lastdpad,repeatcount=0;
 	int dpad;
 	int keyhit;
-	//scanKeys();
-	IPC_KEYS = keyscurr_ipc();
+	IPC_KEYS = keysPressed();
 	keyhit=(oldinput^IPC_KEYS)&IPC_KEYS;
 	oldinput=IPC_KEYS;
 	dpad=IPC_KEYS&(KEY_UP+KEY_DOWN+KEY_LEFT+KEY_RIGHT);
@@ -251,7 +253,7 @@ int getinput() {
 	}
 	return dpad|(keyhit&(KEY_Y+KEY_X+KEY_A+KEY_B+KEY_START));
 }
-
+*/
 /*****************************
 * name:			listrom
 * function:		show a rom file name on the sub-screen.
@@ -276,23 +278,22 @@ void listrom(int line,int rom,int highlight) {
 * argument:		rom: rom number of the roms list.
 * description:		called by rommenu.
 ******************************/
-int loadrom(char * romfilename) {
+int loadrom(int rom) {
+	
 	int i;
 	char **files=(char**)rom_files; 
 	FILE *f;
 	
-	/*
 	if(*files[rom]==1) {	//directory
 		chdir(files[rom]+1);
 		return init_rommenu();
 	} else {	//file
-	*/
-		/*
 		if(strstr(files[rom]+1, ".ips") || strstr(files[rom]+1, ".IPS")) {	// a ips file is loaded.
 			load_ips(files[rom]+1);
 			return 0;
 		}
 		else {
+			char *roms;
 			memcpy(romfilename,files[rom]+1,256);
 
 			if(strstr(files[rom]+1, ".GZ") || strstr(files[rom]+1, ".gz") ||
@@ -304,24 +305,24 @@ int loadrom(char * romfilename) {
 				f=fopen(tmpname,"r");
 			}
 			else {
-			*/
+				char buf[512] = {0};
+				sprintf((char*)buf,"%s%s",getfatfsPath("nes/"),romfilename);
+				sprintf(romfilename,"%s",buf);
 				f=fopen(romfilename,"r");
-			//}
+			}
 
 			romfileext=strrchr(romfilename,'.')+1;
-			char *roms = (char *)rom_start;
+			roms = (char *)rom_start;
 			//f=fopen(romfilename,"r");
 			i=fread(roms,1,ROM_MAX_SIZE,f);	//read the whole thing (filesize=some huge number, don't care)
 			do_ips(i);
 
 			fclose(f);
-			/*
 			if(strstr(files[rom]+1, ".GZ") || strstr(files[rom]+1, ".gz") ||
 				strstr(files[rom]+1, ".ZIP") || strstr(files[rom]+1, ".zip")
 				) {    // a gz file is loaded.
 				unlink(tmpname);
 			}
-			*/
 			romsize=i;
             if(i < 0x100000)
                 i = 0x100000;            //leave some room for FDS files. Also the NSF file need some extra memory
@@ -335,8 +336,8 @@ int loadrom(char * romfilename) {
 			initcart(roms);
 			IPC_MAPPER = debuginfo[16];
 			return -1;	//(-1 on success)
-		//}
-	//}
+		}
+	}
 }
 
 /*****************************
@@ -351,39 +352,44 @@ int init_rommenu() {
 	char *nextfile;
 	int idx=0;
 	DIR *dir = NULL;
-	struct dirent *cnt = NULL;
-	struct stat statbuf;
+	//struct stat statbuf;
 
 	if(!active_interface)		//DLDI trouble
 		return 0;
 
 	files = (char**)rom_files;
 	nextfile=(char*)&files[MAXFILES];
-	dir=opendir(".");			//chdir to root
-	cnt=readdir(dir);
-	stat(cnt->d_name,&statbuf);
-
-	while(cnt != NULL && (idx<MAXFILES - 1) && dir != NULL) {
-		if(((strstr(cnt->d_name, ".NES") || strstr(cnt->d_name, ".nes")) 
-			|| (strstr(cnt->d_name, ".FDS") || strstr(cnt->d_name, ".fds"))
-			|| (strstr(cnt->d_name, ".IPS") || strstr(cnt->d_name, ".ips"))
-			|| (strstr(cnt->d_name, ".GZ") || strstr(cnt->d_name, ".gz"))
-			|| (strstr(cnt->d_name, ".ZIP") || strstr(cnt->d_name, ".zip"))
-			|| (strstr(cnt->d_name, ".nsf") || strstr(cnt->d_name, ".nsf"))
-			|| (S_ISDIR(statbuf.st_mode)) 
-			|| strcmp("..", cnt->d_name) == 0) && strcmp(".", cnt->d_name) != 0) {
-			if(S_ISDIR(statbuf.st_mode) || strcmp("..", cnt->d_name) == 0)
-				*nextfile = 1;
-			else 
-				*nextfile = 2;
-			strcpy(nextfile + 1, cnt->d_name);
-			files[idx]=nextfile;
-			nextfile+=strlen(nextfile)+1;
-			idx++;
+	char nespath[512] = {0};
+	sprintf(nespath,"%s",getfatfsPath("nes"));	// "/"(TGDS) == "." (libfat) 
+	dir=opendir(nespath);			//chdir to root	
+	
+	while((idx<MAXFILES - 1) && (dir != NULL) ) {
+		struct dirent* pent = readdir(dir);
+		if(pent == NULL){
+			break;
 		}
-		cnt=readdir(dir);
-		stat(cnt->d_name,&statbuf);
+		struct fd * fdinst = fd_struct_get(pent->d_ino);
+		if(fdinst){
+			if(((strstr(pent->d_name, ".NES") || strstr(pent->d_name, ".nes")) 
+				|| (strstr(pent->d_name, ".FDS") || strstr(pent->d_name, ".fds"))
+				|| (strstr(pent->d_name, ".IPS") || strstr(pent->d_name, ".ips"))
+				|| (strstr(pent->d_name, ".GZ") || strstr(pent->d_name, ".gz"))
+				|| (strstr(pent->d_name, ".ZIP") || strstr(pent->d_name, ".zip"))
+				|| (strstr(pent->d_name, ".nsf") || strstr(pent->d_name, ".nsf"))
+				|| (S_ISDIR(fdinst->stat.st_mode)) 
+				|| strcmp("..", pent->d_name) == 0) && strcmp(".", pent->d_name) != 0) {
+				if(!S_ISDIR(fdinst->stat.st_mode) || strcmp("..", pent->d_name) == 0)
+					*nextfile = 1;
+				else 
+					*nextfile = 2;
+				strcpy(nextfile + 1, pent->d_name);
+				files[idx]=nextfile;
+				nextfile+=strlen(nextfile)+1;
+				idx++;
+			}
+		}
 	}
+	
 	files[idx]=0;
 	stringsort(files);
 	if(dir)

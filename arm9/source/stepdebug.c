@@ -121,7 +121,7 @@ void stepdebug()
 	do {
 		
 		//IPC_KEYS = keysCurrent();
-		IPC_KEYS = keyscurr_ipc();
+		IPC_KEYS = keysPressed();
 		
 		
 		keys = IPC_KEYS;

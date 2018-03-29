@@ -14,6 +14,8 @@ extern "C"{
 #endif
 
 extern u32 keyscurr_ipc();
+extern u32 keyscurr_ipc9();
+
 #ifdef __cplusplus
 }
 #endif

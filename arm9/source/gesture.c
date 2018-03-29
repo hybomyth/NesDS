@@ -7,6 +7,7 @@
 #include "ds_misc.h"
 #include "c_defs.h"
 #include "menu.h"
+#include "spifwTGDS.h"
 
 #define GMARGIN 32
 
@@ -72,7 +73,7 @@ void do_gesture(void)
 
 	if(gesture_type == 0 && touchstate == 2) {
 		memset((void *)(SUB_BG),0,64*24);
-		powerON(PM_BACKLIGHT_BOTTOM | PM_BACKLIGHT_TOP);
+		setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);
 		consoletext(64 * 4 + 16, "Gesture Motions:", 0);
 		gesture_type = 1;
 		gesture_x = last_x;
@@ -126,9 +127,9 @@ void do_gesture(void)
 			int i;
 
 			if(!(__emuflags & SCREENSWAP)) {
-				powerOFF(PM_BACKLIGHT_BOTTOM);
+				//setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
 			} else {
-				powerOFF(PM_BACKLIGHT_TOP);
+				//setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);	
 			}
 		
 			do_gesture_type = -1;
@@ -149,9 +150,9 @@ void do_gesture(void)
 		}
 		else if(__emuflags & LIGHTGUN) {
 			if(!(__emuflags & SCREENSWAP)) {
-				powerOFF(PM_BACKLIGHT_BOTTOM);
+				//setBacklight(POWMAN_BACKLIGHT_TOP_BIT);	
 			} else {
-				powerOFF(PM_BACKLIGHT_TOP);
+				//setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);	
 			}
 		}
 	}
@@ -235,7 +236,3 @@ int get_gesture(int out)
 	last_pos = gesture_pos;
 	return 0;
 }
-			
-
-
-	

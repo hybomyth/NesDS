@@ -42,8 +42,9 @@ void writeAPU(u32 val,u32 addr)
 			(addr < 0x4018 || debuginfo[16] == 20))) {
 		
 		//IO Write
-		SendMultipleWordACK(fifo_nesapuwrite_ext,(u32)(addr),(u32)(val),NULL);
-		
+		//fifoSendValue32(FIFO_USER_07,(addr << 8) | val);	//SendMultipleWordACK(fifo_nesapuwrite_ext,(u32)(addr),(u32)(val),NULL);
+		SetSoftFIFO((uint32)(addr << 8) | val);
+		IPC_APUW++;
 	}
 	else if(addr == 0x4011) {
 		unsigned char *out = IPC_PCMDATA;

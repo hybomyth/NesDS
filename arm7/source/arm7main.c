@@ -160,6 +160,7 @@ void mix(int chan) {
 		dealrawpcm((u8 *)&buffer[chan*(MIXBUFSIZE/2) + MIXBUFSIZE*18]);
 	}
 	
+	readAPU();
 	APU4015Reg();	//to refresh reg4015.
 }
 
@@ -231,7 +232,7 @@ void soundinterrupt(void)
 	if(REG_IF & IRQ_TIMER1) {
 		lidinterrupt();
 		chan = 1;
-		REG_IF = IRQ_TIMER1;
+		//REG_IF = IRQ_TIMER1;
 	}
 
 }
@@ -276,6 +277,32 @@ void dealrawpcm(unsigned char *out)
 		}
 	}
 }
+
+void readAPU()
+{
+	u32 msg;
+	if(1) {
+		
+		uint32 msg = 0;
+		while(GetSoftFIFO((uint32*)&msg) == true){
+			APUSoundWrite(msg >> 8, msg&0xFF);
+		}
+	
+		IPC_APUR = IPC_APUW;
+	}
+	else {
+		unsigned int *src = IPC_APUWRITE;
+		unsigned int end = IPC_APUW;
+		unsigned int start = IPC_APUR;
+		while(start < end) {
+			unsigned int val = src[start&(1024 - 1)];
+			APUSoundWrite(val >> 8, val & 0xFF);
+			start++;
+		}
+		IPC_APUR = start;
+	}
+}
+
 
 void resetAPU() {
 	NESReset();

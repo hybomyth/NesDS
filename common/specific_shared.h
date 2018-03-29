@@ -69,6 +69,10 @@ extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2,uint32 cmd3,uint32 cm
 //project specific
 extern struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific();
 extern void apusetup();
+
+extern bool getAPUStatus();
+extern void setAPUStatus(bool status);
+
 #ifdef __cplusplus
 }
 #endif

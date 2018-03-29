@@ -6,6 +6,7 @@
 #include "c_defs.h"
 #include "videoTGDS.h"
 #include "consoleTGDS.h"
+#include "spifwTGDS.h"
 
 extern u16 font;
 extern u16 fontpal;
@@ -73,7 +74,7 @@ char cusfont[] = {
 * description:		prepare to show the screen. Called when you touch the screen.
 ******************************/
 void showconsole() {
-	//clearconsole();
+	clearconsole();
 	if(__emuflags & ALLPIXEL) {
 		SETDISPCNT_SUB(MODE_0_2D);
 		DISABLE_BG_SUB(3);
@@ -85,7 +86,7 @@ void showconsole() {
 	__emuflags &= ~ALLPIXEL;
 
 	powerON(POWER_2D_B);
-	powerON(PM_BACKLIGHT_BOTTOM | PM_BACKLIGHT_TOP);
+	setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);
 	SET_MAIN_TOP_LCD();
 	screen_swap = 0;
 	REG_DISPCNT_SUB=MODE_0_2D|DISPLAY_BG0_ACTIVE|DISPLAY_BG1_ACTIVE|DISPLAY_WIN0_ON;
@@ -104,8 +105,6 @@ void showconsole() {
 	SUB_WIN0_Y1=191;
 	SUB_WIN_IN=1;
 	SUB_WIN_OUT=2;
-
-	IRQVBlankWait();
 }
 
 /*****************************
@@ -115,17 +114,16 @@ void showconsole() {
 * description:		hide the screen. Called when you click 'exit'.
 ******************************/
 void hideconsole() {
-	IRQVBlankWait();
-	//powerOFF(POWER_2D_B);
+	powerOFF(POWER_2D_B);
+	setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
+	
 	if((!(__emuflags & ALLPIXELON))) {
 		__emuflags &= ~ALLPIXEL;
 		if(!(__emuflags & SCREENSWAP)) {
-			powerOFF(PM_BACKLIGHT_BOTTOM);			//This cannot be accessed directly.
-			powerON(PM_BACKLIGHT_TOP);
+			setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
 			SET_MAIN_TOP_LCD();
 		} else {
-			powerON(PM_BACKLIGHT_BOTTOM);
-			powerOFF(PM_BACKLIGHT_TOP);
+			setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 			SET_MAIN_BOTTOM_LCD();
 		}
 	} else {
@@ -134,9 +132,7 @@ void hideconsole() {
 		__emuflags |= ALLPIXEL;
 		dmaFillWord(3,0, BG_GFX_SUB , 192 * 256);		//clear the sub screen
 		dmaTransferWord(3,(uint32)BG_PALETTE, (uint32)BG_PALETTE_SUB, 0x400);		//copy the palette
-		powerON(PM_BACKLIGHT_BOTTOM);
-		powerON(PM_BACKLIGHT_TOP);
-
+		//setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);
 		if(pos < -(240 - 192)/2) {
 			__emuflags |= SCREENSWAP;
 			all_pix_start = 0;
@@ -153,7 +149,6 @@ void hideconsole() {
 		SETDISPCNT_SUB(MODE_5_2D);
 		ENABLE_BG_SUB(3);
 		BGCTRL_SUB[3] = (typeof(BGCTRL_SUB[3]))(BgSize_B8_256x256 | BG_MAP_BASE(0) | BG_TILE_BASE(0));
-		IRQVBlankWait();
 		SETDISPCNT_SUB(MODE_5_2D);
 		ENABLE_BG_SUB(3);
 		BGCTRL_SUB[3] = (typeof(BGCTRL_SUB[3]))(BgSize_B8_256x256  | BG_MAP_BASE(0) | BG_TILE_BASE(0));

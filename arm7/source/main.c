@@ -105,13 +105,6 @@ int main() {
 int main() {
 //---------------------------------------------------------------------------------
 	IRQInit();
-	while (!(*((vuint8*)0x04000240) & 0x2));
-	useARM7VRAMStacks();	//change ARM7 stacks to VRAM
-	//VRAM Alloc in this order:
-	//1)
-    //playBuffer = (uint16*)vramAlloc(vramBlockD,(uint32)0x06000000,(1024 * 32));	//0x06000000;	//Playbuffer is top: 0x6000000 + (4000 * 8) bytes
-	//mixBuffer = (sint32 *)vramAlloc(vramBlockD,(uint32)0x06000000,(256));
-    //2)
 	installWifiFIFO();		//use DSWIFI
 	
     int i   = 0;
@@ -148,7 +141,9 @@ int main() {
     //REG_IME = 1;
 	
 	//wait for APU to be setup
-	while(getsIPCSharedTGDSSpecific()->apu_ready != true){}
+	setAPUStatus(false);
+	while(getAPUStatus() == false){}
+	
 	ipc_region = (int)(u32*)getsIPCSharedTGDSSpecific()->IPC_ADDR;
 	
 	nesmain();
