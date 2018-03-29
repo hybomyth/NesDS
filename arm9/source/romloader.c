@@ -152,7 +152,7 @@ void rommenu(int roms) {
 		uint32 keysToPress = (KEY_UP|KEY_DOWN|KEY_LEFT|KEY_RIGHT|KEY_START|KEY_A|KEY_B|KEY_Y);
 		key=keysPressed() & keysToPress;
 		
-		while((keysPressed()&keysToPress)){}
+		while( (loaded>=0) && (keysPressed()&keysToPress) ){}
 		
 		switch(key) {
 			case KEY_START:
@@ -183,7 +183,7 @@ void rommenu(int roms) {
 		}
 		sel%=roms;
 		drawmenu(sel,roms);
-		while(!(keysPressed()&keysToPress)){}
+		while( (loaded>=0) && (!(keysPressed()&keysToPress))){}
 		
 	}while(loaded>=0);
 	
