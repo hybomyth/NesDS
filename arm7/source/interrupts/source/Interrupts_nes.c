@@ -11,19 +11,14 @@
 __attribute__((section(".itcm")))
 #endif
 void Timer0handlerUser(){
+	
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
 void Timer1handlerUser(){
-	chan^=1;
-	mix(chan);
-	if(REG_IF & IRQ_TIMER1) {
-		lidinterrupt();
-		chan = 1;
-		//REG_IF = IRQ_TIMER1;
-	}
+	soundinterrupt();
 }
 
 #ifdef ARM9

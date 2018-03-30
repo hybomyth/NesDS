@@ -96,9 +96,9 @@ void DS_init() {
   E       64K   0    0     6400000-641FFFFh MAIN OBJ
   F       (not used)
   G       (not used)
-  H       32K   3    0     6200000-6207FFFFh(not enabled)
+  H       32K   3    0     6200000-6207FFFh(not enabled)
 
-  I       16K   1    0     6208000-62087FFFh
+  I       16K   1    0     6208000-62087FFh
 */
 	VRAM_ABCD=0x89819199;			//see notes.txt for VRAM layout
 	VRAM_EFG=0x03000082;
@@ -156,6 +156,7 @@ int main(int _argc, char **_argv) {
 		while(1);
 	}
 	
+	nifi_stat = -1;	//do nothing
 	//single player:
 	switch_dswnifi_mode(dswifi_idlemode);
 	//udp nifi:
@@ -190,6 +191,11 @@ int main(int _argc, char **_argv) {
 #endif
 	
 	//__emuflags |= PALSYNC;
+	
+	//ok start emulation now
+	if(getMULTIMode() == dswifi_idlemode){
+		nifi_stat = 0;
+	}
 	
 	while(1) { // main loop to do the emulation
 		

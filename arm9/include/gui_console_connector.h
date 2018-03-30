@@ -113,7 +113,7 @@ extern vramSetup * getProjectSpecificVRAMSetup();
 extern bool InitProjectSpecificConsole();
 
 //2) Uses subEngine: VRAM Layout -> Console Setup
-extern vramSetup * SNEMULDS_2DVRAM_SETUP();
+extern vramSetup * NESDS_2DVRAM_SETUP();
 
 #ifdef __cplusplus
 }

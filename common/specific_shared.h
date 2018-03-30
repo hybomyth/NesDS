@@ -48,11 +48,11 @@ struct sIPCSharedTGDSSpecific{
 //#define GDB_ENABLE
 
 //NESDS special
-#define FIFO_APU_PAUSE 0x1201
-#define FIFO_UNPAUSE 0x1202
-#define FIFO_APU_RESET 0x1204
-#define FIFO_SOUND_RESET 0x1206
-#define FIFO_APU_BUSY 1
+#define FIFO_APU_PAUSE (uint32)(0x1201)
+#define FIFO_UNPAUSE (uint32)(0x1202)
+#define FIFO_APU_RESET (uint32)(0x1204)
+#define FIFO_SOUND_RESET (uint32)(0x1206)
+#define FIFO_APU_BUSY (uint32)(1)
 #define fifo_nesapuwrite_ext	(uint32)(0xffff1019)
 
 #endif

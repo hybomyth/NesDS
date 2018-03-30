@@ -78,6 +78,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2,uint32 cmd3,uint32 cmd4){
 		case FIFO_SOUND_RESET:
 			lidinterrupt();
 		break;
+	
 		//update apu from nds irq
 		case(fifo_nesapuwrite_ext):{
 			//send each chunk separately 

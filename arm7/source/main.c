@@ -145,7 +145,6 @@ int main() {
 	while(getAPUStatus() == false){}
 	
 	ipc_region = (int)(u32*)getsIPCSharedTGDSSpecific()->IPC_ADDR;
-	
 	nesmain();
 	
 	while(1){

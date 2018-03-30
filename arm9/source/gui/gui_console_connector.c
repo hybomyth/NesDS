@@ -70,54 +70,39 @@ GNU General Public License for more details.
 
 //Definition that overrides the weaksymbol expected from toolchain to init console video subsystem
 vramSetup * getProjectSpecificVRAMSetup(){
-	return SNEMULDS_2DVRAM_SETUP();
+	return NESDS_2DVRAM_SETUP();
 }
 
-//1) VRAM Layout
-vramSetup * SNEMULDS_2DVRAM_SETUP(){
+//1) VRAM Layout: vram MST 1 used by default
+vramSetup * NESDS_2DVRAM_SETUP(){
 	
 	vramSetup * vramSetupDefault = (vramSetup *)&vramSetupGlobal[0];
+	vramSetupDefault->vramBankSetupInst[VRAM_A_INDEX].vrambankCR = VRAM_A_LCDC_MODE;	
+	vramSetupDefault->vramBankSetupInst[VRAM_A_INDEX].enabled = false;
 	
-	//vramSetBankA(VRAM_A_MAIN_BG_0x06020000);
-	vramSetupDefault->vramBankSetupInst[VRAM_A_INDEX].vrambankCR = VRAM_A_0x06020000_ENGINE_A_BG;
-	vramSetupDefault->vramBankSetupInst[VRAM_A_INDEX].enabled = true;
+	vramSetupDefault->vramBankSetupInst[VRAM_B_INDEX].vrambankCR = VRAM_B_LCDC_MODE;
+	vramSetupDefault->vramBankSetupInst[VRAM_B_INDEX].enabled = false;
 	
-	//vramSetBankB(VRAM_B_MAIN_BG_0x06040000);
-	vramSetupDefault->vramBankSetupInst[VRAM_B_INDEX].vrambankCR = VRAM_B_0x06040000_ENGINE_A_BG;
-	vramSetupDefault->vramBankSetupInst[VRAM_B_INDEX].enabled = true;
+	vramSetupDefault->vramBankSetupInst[VRAM_C_INDEX].vrambankCR = VRAM_C_LCDC_MODE;
+	vramSetupDefault->vramBankSetupInst[VRAM_C_INDEX].enabled = false;
 	
-	// 128Ko (+48kb) for sub screen / GUI / Console
-	//vramSetBankC(VRAM_C_SUB_BG_0x06200000);
-	vramSetupDefault->vramBankSetupInst[VRAM_C_INDEX].vrambankCR = VRAM_C_0x06200000_ENGINE_B_BG;
-	vramSetupDefault->vramBankSetupInst[VRAM_C_INDEX].enabled = true;
+	vramSetupDefault->vramBankSetupInst[VRAM_D_INDEX].vrambankCR = VRAM_D_LCDC_MODE;
+	vramSetupDefault->vramBankSetupInst[VRAM_D_INDEX].enabled = false;
 	
-	// Some memory for ARM7 (128 Ko!)
-	//vramSetBankD(VRAM_D_ARM7_0x06000000);
-	vramSetupDefault->vramBankSetupInst[VRAM_D_INDEX].vrambankCR = VRAM_D_0x06000000_ARM7;
-	vramSetupDefault->vramBankSetupInst[VRAM_D_INDEX].enabled = true;
+	vramSetupDefault->vramBankSetupInst[VRAM_E_INDEX].vrambankCR = VRAM_E_LCDC_MODE;
+	vramSetupDefault->vramBankSetupInst[VRAM_E_INDEX].enabled = false;
 	
-	// 80Ko for Sprites (SNES : 32-64Ko)
-	//vramSetBankE(VRAM_E_MAIN_SPRITE); // 0x6400000
-	vramSetupDefault->vramBankSetupInst[VRAM_E_INDEX].vrambankCR = VRAM_E_0x06400000_ENGINE_A_BG;
-	vramSetupDefault->vramBankSetupInst[VRAM_E_INDEX].enabled = true;
+	vramSetupDefault->vramBankSetupInst[VRAM_F_INDEX].vrambankCR = VRAM_F_LCDC_MODE;
+	vramSetupDefault->vramBankSetupInst[VRAM_F_INDEX].enabled = false;
 	
-	//vramSetBankF(VRAM_F_MAIN_SPRITE);
-	vramSetupDefault->vramBankSetupInst[VRAM_F_INDEX].vrambankCR = VRAM_F_0x064XXXXX_ENGINE_A_BG;
-	vramSetupDefault->vramBankSetupInst[VRAM_F_INDEX].enabled = true;
+	vramSetupDefault->vramBankSetupInst[VRAM_G_INDEX].vrambankCR = VRAM_G_LCDC_MODE;
+	vramSetupDefault->vramBankSetupInst[VRAM_G_INDEX].enabled = false;
 	
-	//vramSetBankG(VRAM_G_BG_EXT_PALETTE);
-	vramSetupDefault->vramBankSetupInst[VRAM_G_INDEX].vrambankCR = VRAM_G_SLOT_ENGINE_A_BG_EXTENDED;
-	vramSetupDefault->vramBankSetupInst[VRAM_G_INDEX].enabled = true;
-	
-	// 48ko For CPU 
-	//vramSetBankH(VRAM_H_LCD);
 	vramSetupDefault->vramBankSetupInst[VRAM_H_INDEX].vrambankCR = VRAM_H_LCDC_MODE;
-	vramSetupDefault->vramBankSetupInst[VRAM_H_INDEX].enabled = true;
+	vramSetupDefault->vramBankSetupInst[VRAM_H_INDEX].enabled = false;
 	
-	//vramSetBankI(VRAM_I_LCD);
 	vramSetupDefault->vramBankSetupInst[VRAM_I_INDEX].vrambankCR = VRAM_I_LCDC_MODE;
-	vramSetupDefault->vramBankSetupInst[VRAM_I_INDEX].enabled = true;
-	
+	vramSetupDefault->vramBankSetupInst[VRAM_I_INDEX].enabled = false;
 	
 	return vramSetupDefault;
 }

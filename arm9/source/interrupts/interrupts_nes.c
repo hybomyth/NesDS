@@ -49,7 +49,9 @@ void VblankUser(){
 	
 	//update when idle
 	if((getMULTIMode() == dswifi_idlemode) || (getMULTIMode() == dswifi_localnifimode)){
-		EMU_VBlank();		
+		if(nifi_stat == 0) {
+			EMU_VBlank();
+		}
 	}
 	//only update screen when connected
 	else if(getMULTIMode() == dswifi_udpnifimode){
