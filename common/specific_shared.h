@@ -55,6 +55,8 @@ struct sIPCSharedTGDSSpecific{
 #define FIFO_APU_BUSY (uint32)(1)
 #define fifo_nesapuwrite_ext	(uint32)(0xffff1019)
 
+#define DEBUG7	(uint32)(0xffff1020)
+
 #endif
 
 
@@ -72,6 +74,8 @@ extern void apusetup();
 
 extern bool getAPUStatus();
 extern void setAPUStatus(bool status);
+extern uint32 * getAPUAddress();
+extern void setAPUAddress(uint32* apuAddr);
 
 #ifdef __cplusplus
 }

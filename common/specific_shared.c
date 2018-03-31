@@ -50,7 +50,11 @@ USA
 __attribute__((section(".itcm")))
 #endif
 struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific(){
-	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (__attribute__((packed)) struct sIPCSharedTGDSSpecific*)(getUserIPCAddress());
+	uint32 IPCUser = getUserIPCAddress();
+	#ifdef ARM9
+	coherent_user_range_by_size(IPCUser, (int)(1024*4));
+	#endif
+	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (__attribute__((packed)) struct sIPCSharedTGDSSpecific*)(IPCUser);
 	return sIPCSharedTGDSSpecificInst;
 }
 
@@ -91,6 +95,17 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2,uint32 cmd3,uint32 cmd4){
 		#endif
 		//ARM9 project specific command handler
 		#ifdef ARM9
+		
+		case(DEBUG7):{			
+			if(getAPUStatus() == true){
+				char buf[128] = {0};
+				sprintf((char*)buf,"arm7APUok:%x",cmd2);
+				consoletext(64*2-32,(char*)buf,0);
+				while(1==1);
+			}
+		}
+		break;
+		
 		#endif
 	}
 	
@@ -110,10 +125,20 @@ void setAPUStatus(bool status){
 	getsIPCSharedTGDSSpecific()->apu_ready = status;
 }
 
+uint32 * getAPUAddress(){
+	return (uint32*)getsIPCSharedTGDSSpecific()->IPC_ADDR;
+}
+
+void setAPUAddress(uint32* apuAddr){
+	getsIPCSharedTGDSSpecific()->IPC_ADDR = apuAddr;
+}
+	
+
+
 //Project Specific
 #ifdef ARM9
 void apusetup(){
-	getsIPCSharedTGDSSpecific()->IPC_ADDR = (u32*)ipc_region;
+	setAPUAddress((u32*)&ipc_region);
 	setAPUStatus(true);
 }
 #endif
