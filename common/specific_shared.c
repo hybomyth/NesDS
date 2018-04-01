@@ -50,11 +50,10 @@ USA
 __attribute__((section(".itcm")))
 #endif
 struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific(){
-	uint32 IPCUser = getUserIPCAddress();
 	#ifdef ARM9
-	coherent_user_range_by_size(IPCUser, (int)(1024*4));
+	coherent_user_range_by_size(getToolchainIPCAddress(), (int)(1024*4));
 	#endif
-	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (__attribute__((packed)) struct sIPCSharedTGDSSpecific*)(IPCUser);
+	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (__attribute__((packed)) struct sIPCSharedTGDSSpecific*)(getUserIPCAddress());
 	return sIPCSharedTGDSSpecificInst;
 }
 
