@@ -19,7 +19,12 @@
 #include "interrupts.h"
 #include "touch_ipc.h"
 #include "specific_shared.h"
+#include "spifwTGDS.h"
 
+//wnifilib: multiplayer
+#include "dswnifi_lib.h"
+#include "dswnifi.h"
+#include "specific_shared.h"
 
 //frameskip min = 1, max = xxxxxx....
 int soft_frameskip = 3;
@@ -145,13 +150,11 @@ int main(int _argc, char **_argv) {
 	int ret=FS_init();
 	if (ret == 0)
 	{
-		printf("FS Init OK");
 		active_interface = 1;
 		//FRESULT res = FS_chdir("0:/");
 	}
 	else if(ret == -1)
 	{
-		printf("FS Init ERROR. dldi failed. Check your cart");
 		active_interface = 0;
 		while(1);
 	}
@@ -168,7 +171,6 @@ int main(int _argc, char **_argv) {
 	
 	DS_init(); //DS init.
 	EMU_Init(); //emulation init.
-	apusetup();
 	
 	IPC_ALIVE = 0;
 	IPC_APUIRQ = 0;
@@ -176,7 +178,8 @@ int main(int _argc, char **_argv) {
 
 	consoleinit(); //init subscreen to show chars.
 	crcinit();	//init the crc table.
-
+	apusetup();
+	
 	//pre-alocate memory....
 	//IPC_FILES = malloc(MAXFILES * 256 + MAXFILES * 4);
 	//IPC_ROM = malloc(ROM_MAX_SIZE);
@@ -337,6 +340,24 @@ int main(int _argc, char **_argv) {
 			*/
 		}
 		
+		#ifdef GDB_ENABLE
+		setBacklight(POWMAN_BACKLIGHT_TOP_BIT|POWMAN_BACKLIGHT_BOTTOM_BIT);
+		//GDB Stub Process must run here
+		if(remoteStubMain() == remoteStubMainWIFINotConnected){
+			if (switch_dswnifi_mode(dswifi_gdbstubmode) == true){
+				//Show IP and port here
+				char buf[128] = {0};
+				sprintf((char*)buf,"Port:%d GDB IP:%s",remotePort,(char*)print_ip((uint32)Wifi_GetIP()));
+				consoletext(64*1,(char*)buf,0);
+				remoteInit();
+			}
+			else{
+				//GDB Client Reconnect:ERROR
+			}
+		}
+		//else should be connected and GDB running at desired IP/port
+		#endif
+
 		IRQVBlankWait();
 		
 	}

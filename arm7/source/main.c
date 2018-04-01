@@ -144,6 +144,11 @@ int main() {
 	setAPUStatus(false);
 	while(getAPUStatus() == false){}
 	
+	//ok
+	//while(getAPUStatus() == true){
+	//	SendMultipleWordACK(DEBUG7, (uint32)getAPUAddress(), 0, NULL);
+	//}
+	
 	ipc_region = (int)(u32*)getsIPCSharedTGDSSpecific()->IPC_ADDR;
 	nesmain();
 	

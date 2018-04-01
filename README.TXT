@@ -4,6 +4,13 @@ Since the 0.40 version, I ported the code of EX Edtion to the original nesDS, no
 
 If you found any bug on nesDS, just tell me. Maybe I could fix it.
 
+2018-04-01
+GDB Remote debugging is now possible, to enable GDB Remote Debugging you will head to: common/specific_shared.h and change the commented out line: 
+//#define GDB_ENABLE into uncommented: #define GDB_ENABLE
+Then recompile the project, note that games won´t boot while GDB Remote debugging due to TCP nature, this is normal.
+Follow the steps @ https://github.com/cotodevel/ToolchainGenericDS-gdbstub-example
+to disable GDB Remote debugging simply comment out the GDB_ENABLE line so it looks like this: //#define GDB_ENABLE and recompile project.
+
 2017-02-04
 coto: VERY experimental UDP netplay. I call the library "DSWNIFI" since it allows (untested) to swap between NIFI and WIFI on the fly. More on that below. 
 	NOTE: It's so damn unstable , i tell you. you will desync very fast, some UDP prediction algorithm must be set, and some accounting of the current rendered frames is needed. 
