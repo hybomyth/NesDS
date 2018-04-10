@@ -34,7 +34,7 @@
 #include <unistd.h>
 #include <sys/dir.h>
 #include <fcntl.h>
-#include "fsfatlayerTGDS.h"
+#include "fsfatlayerTGDSLegacy.h"
 #include "fileHandleTGDS.h"
 
 extern int subscreen_stat;
